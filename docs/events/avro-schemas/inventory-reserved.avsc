@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "InventoryReserved",
+  "namespace": "com.ecommerce.events",
+  "fields": [
+    { "name": "reservationId", "type": "string" },
+    { "name": "sku", "type": "string" },
+    { "name": "quantity", "type": "int" },
+    { "name": "orderId", "type": ["null", "string"], "default": null },
+    { "name": "reservedAt", "type": "long", "logicalType": "timestamp-millis" }
+  ]
+}
+

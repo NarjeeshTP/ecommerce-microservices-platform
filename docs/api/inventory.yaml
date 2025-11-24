@@ -1,0 +1,18 @@
+openapi: "3.0.1"
+info:
+  title: Inventory API
+  version: "0.1.0"
+paths:
+  /inventory/{sku}/reserve:
+    post:
+      summary: Reserve inventory for SKU
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reserved
+

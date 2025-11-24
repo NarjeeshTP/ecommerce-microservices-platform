@@ -72,6 +72,45 @@ Finalize architecture artifacts and local infra.
 
 ---
 
+# Phase 1 — Start Implementation (Architecture Foundations) — quick actions
+
+Short checklist (required before coding):
+- Docker + docker compose plugin installed
+- Java 17 + Maven (or Gradle) installed for service templates
+- Repo cloned and on a feature branch
+
+Scaffold commands (run from repo root)
+```bash
+# create docs + placeholders
+mkdir -p docs/{architecture,decisions,api,events/avro-schemas,diagrams}
+mkdir -p platform-libraries/{common-dtos,service-starter,shared-utils,tracing}
+mkdir -p services/template-service
+# add small placeholders
+touch docs/architecture/architecture-foundation.md
+touch docs/api/catalog-openapi.yml
+touch docs/events/avro-schemas/order-created.avsc
+echo "{}" > platform-libraries/service-starter/README.md
+```
+
+Bring up Phase 1 infra (local)
+```bash
+# from repo root
+docker compose -f infra/docker-compose.yml up --build -d
+# check key endpoints
+curl -sfS http://localhost:8081/subjects || echo "schema-registry not ready"
+curl -sfS http://localhost:9200/ || echo "elasticsearch not ready"
+curl -sfS http://localhost:9090/ || echo "prometheus not ready"
+pg_isready -h localhost -p 5432 || echo "postgres not ready"
+```
+
+Immediate work items (first PRs)
+1. Add ADRs in docs/decisions/ (use template files 0001–0008).  
+2. Populate docs/api/ with minimal OpenAPI contracts for 6 core services.  
+3. Create service-starter skeleton in platform-libraries/service-starter (Spring Boot template or README with steps).  
+4. Implement catalog-service scaffold from service-starter into services/catalog-service.
+
+---
+
 # Phase 2 — Service Template & Catalog Service (Week 2–3)
 Create a reusable Spring Boot service template and implement Catalog service.
 
@@ -263,3 +302,22 @@ Use path filters to optimize builds.
 - Basic observability (metrics & traces) enabled
 - README + docs updated
 
+---
+
+## Start Phase 1 now? — Readiness checklist (quick)
+
+- Prereqs installed:
+  - Docker (and docker compose plugin)
+  - Java 17, Maven/Gradle (for Spring services)
+  - Git + repo cloned
+- Repo basics present:
+  - infra/docker-compose.yml exists and is runnable
+  - docs/ (ADRs / OpenAPI placeholders) present or planned
+  - CI skeleton (GitHub Actions) available to run tests
+- Quick smoke-run (from repo root):
+  - docker compose -f infra/docker-compose.yml up --build -d
+  - docker compose -f infra/docker-compose.yml ps
+  - curl -fsS http://localhost:8081 || echo "schema-registry not ready"
+  - pg_isready -h localhost -p 5432
+- If all checks pass: begin Phase 1 tasks (create service template, ADRs, scaffold catalog service).
+- If anything missing: complete the checklist items (infra, ADRs, CI) before implementing core services.

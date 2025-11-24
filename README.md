@@ -1,4 +1,3 @@
-
 # E-Commerce Microservices Platform
 
 A complete, production-grade, cloud-native backend built for mastering Java, Spring Boot, microservices, and distributed systems.
@@ -252,6 +251,54 @@ docker-compose up
 helm install catalog-service deployment/helm/catalog-service
 
 ```
+
+---
+
+## Phase 0 — Initial repository skeleton
+
+Phase 0 artifacts have been added to bootstrap development. Files created in this phase include:
+
+- `docs/decisions/0001-use-kubernetes.md` through `0008-secrets.md` (initial ADRs)
+- Placeholder OpenAPI specs in `docs/api/` for core services (catalog, pricing, cart, order, payment, inventory)
+- `infra/docker-compose.yml` — minimal local dev stack (Kafka, Zookeeper, Schema Registry, Postgres, Redis)
+- `.github/workflows/ci.yml` — CI bootstrap to build Maven modules
+- `.gitkeep` placeholders for key folders
+
+To start the basic local infra (Phase 0):
+
+```bash
+cd infra
+docker compose up
+```
+
+---
+
+## 🚀 Phase 1 — Architecture Foundations (quickstart)
+
+Scaffold Phase 1 artifacts (from repo root)
+```bash
+mkdir -p docs/{architecture,decisions,api,events/avro-schemas,diagrams}
+mkdir -p platform-libraries/{common-dtos,service-starter,shared-utils,tracing}
+mkdir -p services/template-service services/catalog-service
+touch docs/architecture/architecture-foundation.md
+touch docs/api/{catalog-openapi.yml,order-openapi.yml,pricing-openapi.yml,cart-openapi.yml,payment-openapi.yml,inventory-openapi.yml}
+touch docs/events/avro-schemas/{order-created.avsc,inventory-reserved.avsc}
+```
+
+Bring up local infra for Phase 1
+```bash
+# prefer explicit file path for infra so other docker compose files are not picked up
+docker compose -f infra/docker-compose.yml up --build -d
+# verify
+curl -sfS http://localhost:8081/subjects && echo "Schema Registry ok"
+curl -sfS http://localhost:9200/ && echo "Elasticsearch ok"
+curl -sfS http://localhost:9090/ && echo "Prometheus ok"
+```
+
+Recommended next steps
+- Populate ADRs in docs/decisions and the architecture one‑pager in docs/architecture.  
+- Generate minimal OpenAPI server stubs from docs/api/*.yml and copy into services/template-service.  
+- Create platform-libraries/service-starter README with build/run steps and a Dockerfile.
 
 ---
 

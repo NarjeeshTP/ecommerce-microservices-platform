@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/infra/keycloak/README.md">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/infra/keycloak/README.md" />
+              <option name="originalContent" value="&#10;" />
+              <option name="updatedContent" value="# Keycloak quickstart for local testing&#10;&#10;This folder contains quick notes to run a local Keycloak (optional) for OAuth2/OIDC testing.&#10;&#10;Files added in this folder:&#10;- `docker-compose.yml` - simple Keycloak dev stack&#10;- `get-token.sh` - small helper script to request an access token for testing&#10;&#10;Quick docker-compose (example is provided in `docker-compose.yml`):&#10;&#10;```yaml&#10;version: '3.8'&#10;services:&#10;  keycloak:&#10;    image: quay.io/keycloak/keycloak:21.1.0&#10;    command: start-dev&#10;    environment:&#10;      KEYCLOAK_ADMIN: admin&#10;      KEYCLOAK_ADMIN_PASSWORD: admin&#10;    ports:&#10;      - 8080:8080&#10;    volumes:&#10;      - ./realm-import:/opt/keycloak/data/import:rw&#10;    restart: unless-stopped&#10;```&#10;&#10;Run (from repo root):&#10;&#10;```bash&#10;# start keycloak locally&#10;cd infra/keycloak&#10;docker compose up -d&#10;```&#10;&#10;Then open http://localhost:8080 and login with admin/admin.&#10;&#10;Optional: import a preconfigured realm by placing a realm JSON file in `infra/keycloak/realm-import/` and Keycloak will auto-import it on startup when using `start-dev`.&#10;&#10;Create a realm, client (set Access Type to 'public' or 'confidential' with client secret), and a test user. Configure the client's 'Valid Redirect URIs' and 'Web Origins' as needed.&#10;&#10;To get a test access token (example for public client) you can use the helper script `get-token.sh`:&#10;&#10;Usage:&#10;&#10;```bash&#10;# make script executable once&#10;chmod +x infra/keycloak/get-token.sh&#10;&#10;# arguments: &lt;realm&gt; &lt;client-id&gt; &lt;username&gt; &lt;password&gt; [&lt;keycloak-url&gt;]&#10;infra/keycloak/get-token.sh myrealm myclient testuser password&#10;```&#10;&#10;Example raw curl if you prefer:&#10;&#10;```bash&#10;# replace realm, client, username, password accordingly&#10;curl -X POST \&#10;  &quot;http://localhost:8080/realms/&lt;realm-name&gt;/protocol/openid-connect/token&quot; \&#10;  -H &quot;Content-Type: application/x-www-form-urlencoded&quot; \&#10;  -d &quot;grant_type=password&amp;client_id=&lt;client-id&gt;&amp;username=&lt;user&gt;&amp;password=&lt;pass&gt;&quot;&#10;```&#10;&#10;The returned JSON contains `access_token` which you can use to call service endpoints:&#10;&#10;```bash&#10;curl -H &quot;Authorization: Bearer &lt;access_token&gt;&quot; http://localhost:8082/catalog/items&#10;```&#10;&#10;Configure the service to use Keycloak for JWT validation by setting in `application.yml` or env:&#10;&#10;```yaml&#10;spring:&#10;  security:&#10;    oauth2:&#10;      resourceserver:&#10;        jwt:&#10;          issuer-uri: http://localhost:8080/realms/&lt;realm-name&gt;&#10;```&#10;&#10;This README is a quickstart note — adapt versions and client settings as needed." />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/infra/keycloak/docker-compose.yml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/infra/keycloak/docker-compose.yml" />
+              <option name="updatedContent" value="version: '3.8'&#10;services:&#10;  keycloak:&#10;    image: quay.io/keycloak/keycloak:21.1.0&#10;    command: start-dev&#10;    environment:&#10;      KEYCLOAK_ADMIN: admin&#10;      KEYCLOAK_ADMIN_PASSWORD: admin&#10;    ports:&#10;      - 8080:8080&#10;    volumes:&#10;      - ./realm-import:/opt/keycloak/data/import:rw&#10;    restart: unless-stopped&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/infra/keycloak/get-token.sh">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/infra/keycloak/get-token.sh" />
+              <option name="updatedContent" value="#!/usr/bin/env bash&#10;set -euo pipefail&#10;&#10;REALM=${1:-myrealm}&#10;CLIENT_ID=${2:-myclient}&#10;USERNAME=${3:-testuser}&#10;PASSWORD=${4:-password}&#10;KEYCLOAK_URL=${5:-http://localhost:8080}&#10;&#10;TOKEN_ENDPOINT=&quot;$KEYCLOAK_URL/realms/$REALM/protocol/openid-connect/token&quot;&#10;&#10;curl -s -X POST &quot;$TOKEN_ENDPOINT&quot; \&#10;  -H &quot;Content-Type: application/x-www-form-urlencoded&quot; \&#10;  -d &quot;grant_type=password&amp;client_id=$CLIENT_ID&amp;username=$USERNAME&amp;password=$PASSWORD&quot; | jq '.'&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/infra/keycloak/realm-import/myrealm-realm.json">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/infra/keycloak/realm-import/myrealm-realm.json" />
+              <option name="updatedContent" value="{&#10;  &quot;realm&quot;: &quot;myrealm&quot;,&#10;  &quot;enabled&quot;: true,&#10;  &quot;clients&quot;: [&#10;    {&#10;      &quot;clientId&quot;: &quot;myclient&quot;,&#10;      &quot;enabled&quot;: true,&#10;      &quot;publicClient&quot;: true,&#10;      &quot;redirectUris&quot;: [&quot;*&quot;],&#10;      &quot;directAccessGrantsEnabled&quot;: true&#10;    }&#10;  ],&#10;  &quot;users&quot;: [&#10;    {&#10;      &quot;username&quot;: &quot;testuser&quot;,&#10;      &quot;enabled&quot;: true,&#10;      &quot;credentials&quot;: [&#10;        {&#10;          &quot;type&quot;: &quot;password&quot;,&#10;          &quot;value&quot;: &quot;password&quot;&#10;        }&#10;      ]&#10;    }&#10;  ]&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/catalog-service/pom.xml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/catalog-service/pom.xml" />
+              <option name="originalContent" value="&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot;&#10;         xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&#10;         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;&#10;  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;&#10;  &lt;groupId&gt;com.ecommerce.services&lt;/groupId&gt;&#10;  &lt;artifactId&gt;catalog-service&lt;/artifactId&gt;&#10;  &lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;&#10;  &lt;packaging&gt;jar&lt;/packaging&gt;&#10;&#10;  &lt;properties&gt;&#10;    &lt;java.version&gt;17&lt;/java.version&gt;&#10;    &lt;spring.boot.version&gt;3.1.6&lt;/spring.boot.version&gt;&#10;  &lt;/properties&gt;&#10;&#10;  &lt;dependencyManagement&gt;&#10;    &lt;dependencies&gt;&#10;      &lt;dependency&gt;&#10;        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;        &lt;artifactId&gt;spring-boot-dependencies&lt;/artifactId&gt;&#10;        &lt;version&gt;${spring.boot.version}&lt;/version&gt;&#10;        &lt;type&gt;pom&lt;/type&gt;&#10;        &lt;scope&gt;import&lt;/scope&gt;&#10;      &lt;/dependency&gt;&#10;    &lt;/dependencies&gt;&#10;  &lt;/dependencyManagement&gt;&#10;&#10;  &lt;dependencies&gt;&#10;    &lt;dependency&gt;&#10;      &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;      &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;&#10;    &lt;/dependency&gt;&#10;  &lt;/dependencies&gt;&#10;&#10;  &lt;build&gt;&#10;    &lt;plugins&gt;&#10;      &lt;plugin&gt;&#10;        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;        &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;&#10;      &lt;/plugin&gt;&#10;    &lt;/plugins&gt;&#10;  &lt;/build&gt;&#10;&lt;/project&gt;&#10;&#10;" />
+              <option name="updatedContent" value="&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot;&#10;         xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&#10;         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;&#10;  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;&#10;  &lt;groupId&gt;com.ecommerce.services&lt;/groupId&gt;&#10;  &lt;artifactId&gt;catalog-service&lt;/artifactId&gt;&#10;  &lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;&#10;  &lt;packaging&gt;jar&lt;/packaging&gt;&#10;&#10;  &lt;properties&gt;&#10;    &lt;java.version&gt;17&lt;/java.version&gt;&#10;    &lt;spring.boot.version&gt;3.1.6&lt;/spring.boot.version&gt;&#10;  &lt;/properties&gt;&#10;&#10;  &lt;dependencyManagement&gt;&#10;    &lt;dependencies&gt;&#10;      &lt;dependency&gt;&#10;        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;        &lt;artifactId&gt;spring-boot-dependencies&lt;/artifactId&gt;&#10;        &lt;version&gt;${spring.boot.version}&lt;/version&gt;&#10;        &lt;type&gt;pom&lt;/type&gt;&#10;        &lt;scope&gt;import&lt;/scope&gt;&#10;      &lt;/dependency&gt;&#10;    &lt;/dependencies&gt;&#10;  &lt;/dependencyManagement&gt;&#10;&#10;  &lt;dependencies&gt;&#10;    &lt;dependency&gt;&#10;      &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;      &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;&#10;    &lt;/dependency&gt;&#10;    &lt;dependency&gt;&#10;      &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;      &lt;artifactId&gt;spring-boot-starter-oauth2-resource-server&lt;/artifactId&gt;&#10;    &lt;/dependency&gt;&#10;  &lt;/dependencies&gt;&#10;&#10;  &lt;build&gt;&#10;    &lt;plugins&gt;&#10;      &lt;plugin&gt;&#10;        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;        &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;&#10;        &lt;version&gt;${spring.boot.version}&lt;/version&gt;&#10;        &lt;executions&gt;&#10;          &lt;execution&gt;&#10;            &lt;goals&gt;&#10;              &lt;goal&gt;repackage&lt;/goal&gt;&#10;            &lt;/goals&gt;&#10;          &lt;/execution&gt;&#10;        &lt;/executions&gt;&#10;        &lt;configuration&gt;&#10;          &lt;mainClass&gt;com.ecommerce.catalogservice.CatalogServiceApplication&lt;/mainClass&gt;&#10;        &lt;/configuration&gt;&#10;      &lt;/plugin&gt;&#10;    &lt;/plugins&gt;&#10;  &lt;/build&gt;&#10;&lt;/project&gt;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/CatalogServiceApplication.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/CatalogServiceApplication.java" />
+              <option name="updatedContent" value="package com.ecommerce.catalogservice;&#10;&#10;import org.springframework.boot.SpringApplication;&#10;import org.springframework.boot.autoconfigure.SpringBootApplication;&#10;&#10;@SpringBootApplication&#10;public class CatalogServiceApplication {&#10;    public static void main(String[] args) {&#10;        SpringApplication.run(CatalogServiceApplication.class, args);&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/config/OAuth2ResourceServerConfig.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/config/OAuth2ResourceServerConfig.java" />
+              <option name="updatedContent" value="package com.ecommerce.catalogservice.config;&#10;&#10;import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;&#10;import org.springframework.context.annotation.Bean;&#10;import org.springframework.context.annotation.Configuration;&#10;import org.springframework.security.config.Customizer;&#10;import org.springframework.security.config.annotation.web.builders.HttpSecurity;&#10;import org.springframework.security.web.SecurityFilterChain;&#10;&#10;@Configuration&#10;@ConditionalOnProperty(prefix = &quot;spring.security.oauth2.resourceserver.jwt&quot;, name = &quot;issuer-uri&quot;)&#10;public class OAuth2ResourceServerConfig {&#10;&#10;    @Bean&#10;    public SecurityFilterChain oauth2SecurityFilterChain(HttpSecurity http) throws Exception {&#10;        http&#10;            .authorizeHttpRequests(auth -&gt; auth&#10;                .requestMatchers(&quot;/catalog/**&quot;).authenticated()&#10;                .anyRequest().authenticated()&#10;            )&#10;            .oauth2ResourceServer(oauth2 -&gt; oauth2.jwt(Customizer.withDefaults()));&#10;&#10;        return http.build();&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/config/SecurityConfig.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/config/SecurityConfig.java" />
+              <option name="originalContent" value="&#10;" />
+              <option name="updatedContent" value="package com.ecommerce.catalogservice.config;&#10;&#10;import org.springframework.context.annotation.Bean;&#10;import org.springframework.context.annotation.Configuration;&#10;import org.springframework.context.annotation.Profile;&#10;import org.springframework.security.config.Customizer;&#10;import org.springframework.security.config.annotation.web.builders.HttpSecurity;&#10;import org.springframework.security.web.SecurityFilterChain;&#10;&#10;@Configuration&#10;@Profile(&quot;local&quot;) // only active when `spring.profiles.active=local` to allow dev convenience&#10;public class SecurityConfig {&#10;&#10;    @Bean&#10;    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {&#10;        http&#10;            .authorizeHttpRequests(auth -&gt; auth&#10;                .requestMatchers(&quot;/catalog/**&quot;, &quot;/actuator/health&quot;, &quot;/actuator/info&quot;).permitAll()&#10;                .anyRequest().authenticated()&#10;            )&#10;            .csrf(csrf -&gt; csrf.disable())&#10;            // keep default httpBasic so other endpoints remain protected if needed in dev&#10;            .httpBasic(Customizer.withDefaults());&#10;&#10;        return http.build();&#10;    }&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/controller/CatalogController.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/catalog-service/src/main/java/com/ecommerce/catalogservice/controller/CatalogController.java" />
+              <option name="updatedContent" value="package com.ecommerce.catalogservice.controller;&#10;&#10;import org.springframework.web.bind.annotation.GetMapping;&#10;import org.springframework.web.bind.annotation.RestController;&#10;&#10;import java.util.List;&#10;import java.util.Map;&#10;&#10;@RestController&#10;public class CatalogController {&#10;&#10;    @GetMapping(&quot;/catalog/items&quot;)&#10;    public List&lt;Map&lt;String, Object&gt;&gt; listItems() {&#10;        return List.of(&#10;                Map.of(&quot;sku&quot;, &quot;SKU-001&quot;, &quot;name&quot;, &quot;Sample Item 1&quot;, &quot;price&quot;, 19.99),&#10;                Map.of(&quot;sku&quot;, &quot;SKU-002&quot;, &quot;name&quot;, &quot;Sample Item 2&quot;, &quot;price&quot;, 29.99)&#10;        );&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/catalog-service/src/main/resources/application.yml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/catalog-service/src/main/resources/application.yml" />
+              <option name="updatedContent" value="spring:&#10;  application:&#10;    name: catalog-service&#10;server:&#10;  port: 8081&#10;management:&#10;  endpoints:&#10;    web:&#10;      exposure:&#10;        include: health,info&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

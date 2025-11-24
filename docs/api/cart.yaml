@@ -1,0 +1,24 @@
+openapi: "3.0.1"
+info:
+  title: Cart API
+  version: "0.1.0"
+paths:
+  /cart/{cartId}:
+    get:
+      summary: Get cart
+      parameters:
+        - name: cartId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /cart/{cartId}/items:
+    post:
+      summary: Add item to cart
+      responses:
+        '201':
+          description: Created
+

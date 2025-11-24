@@ -1,0 +1,4 @@
+com/ecommerce/catalogservice/controller/CatalogController.class
+com/ecommerce/catalogservice/CatalogServiceApplication.class
+com/ecommerce/catalogservice/config/OAuth2ResourceServerConfig.class
+com/ecommerce/catalogservice/config/SecurityConfig.class

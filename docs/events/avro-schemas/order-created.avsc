@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "OrderCreated",
+  "namespace": "com.ecommerce.events",
+  "fields": [
+    { "name": "orderId", "type": "string" },
+    { "name": "customerId", "type": "string" },
+    { "name": "items", "type": { "type": "array", "items": { "type": "record", "name": "OrderItem", "fields": [ { "name": "sku", "type": "string" }, { "name": "quantity", "type": "int" } ] } } },
+    { "name": "totalAmount", "type": "double" },
+    { "name": "createdAt", "type": "long", "logicalType": "timestamp-millis" }
+  ]
+}
+

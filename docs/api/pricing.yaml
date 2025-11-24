@@ -1,0 +1,18 @@
+openapi: "3.0.1"
+info:
+  title: Pricing API
+  version: "0.1.0"
+paths:
+  /pricing/price/{sku}:
+    get:
+      summary: Get price for SKU
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
