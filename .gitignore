@@ -1,0 +1,24 @@
+# Ignore build outputs
+target/
+**/target/
+*.jar
+
+# Logs and temp
+*.log
+tmp/
+/tmp/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Maven wrapper
+.mvn/
+
+# Node
+node_modules/
+
+# OS
+Thumbs.db
+
