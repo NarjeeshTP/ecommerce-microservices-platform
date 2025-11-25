@@ -44,7 +44,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
       SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
     ports:
-      - '8081:8081'
+      - '8083:8081'
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/subjects" ]
       interval: 10s
@@ -96,7 +96,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - '9090:9090'
     healthcheck:
@@ -141,6 +141,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  catalog-postgres:
+    image: postgres:latest
+    container_name: catalog-postgres
+    environment:
+      POSTGRES_USER: catalog_user
+      POSTGRES_PASSWORD: catalog_password
+      POSTGRES_DB: catalog_db
+    ports:
+      - "5433:5432"
+
+  catalog-service:
+    build:
+      context: ../services/catalog-service
+    container_name: catalog-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - catalog-postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://catalog-postgres:5432/catalog_db
+      SPRING_DATASOURCE_USERNAME: catalog_user
+      SPRING_DATASOURCE_PASSWORD: catalog_password
+      SPRING_PROFILES_ACTIVE: local
 
 volumes:
   postgres-data:

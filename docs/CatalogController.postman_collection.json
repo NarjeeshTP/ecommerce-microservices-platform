@@ -1,0 +1,110 @@
+{
+  "info": {
+    "name": "CatalogController",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Catalog Items",
+      "item": [
+        {
+          "name": "Get All Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/catalog/items",
+              "host": ["http://localhost:8081"],
+              "path": ["catalog", "items"]
+            }
+          }
+        },
+        {
+          "name": "Get Item By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/catalog/items/:id",
+              "host": ["http://localhost:8081"],
+              "path": ["catalog", "items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sample Item\",\n  \"description\": \"This is a sample item.\",\n  \"price\": 100.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/catalog/items",
+              "host": ["http://localhost:8081"],
+              "path": ["catalog", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Item\",\n  \"description\": \"This is an updated item.\",\n  \"price\": 150.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/catalog/items/:id",
+              "host": ["http://localhost:8081"],
+              "path": ["catalog", "items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/catalog/items/:id",
+              "host": ["http://localhost:8081"],
+              "path": ["catalog", "items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
