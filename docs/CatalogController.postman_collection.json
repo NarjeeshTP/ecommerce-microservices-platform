@@ -102,6 +102,25 @@
               ]
             }
           }
+        },
+        {
+          "name": "Search Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/catalog/items/search?name=Sample&category=Sample%20Category&page=0&size=5&sort=name,asc",
+              "host": ["http://localhost:8081"],
+              "path": ["catalog", "items", "search"],
+              "query": [
+                { "key": "name", "value": "Sample", "description": "Filter by item name (optional)" },
+                { "key": "category", "value": "Sample Category", "description": "Filter by category (optional)" },
+                { "key": "page", "value": "0", "description": "Page number (optional)" },
+                { "key": "size", "value": "5", "description": "Page size (optional)" },
+                { "key": "sort", "value": "name,asc", "description": "Sorting criteria (optional)" }
+              ]
+            }
+          }
         }
       ]
     }
