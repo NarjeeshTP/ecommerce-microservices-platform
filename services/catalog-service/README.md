@@ -45,6 +45,16 @@ nohup java -jar "$JAR" --server.port=8082 --spring.profiles.active=local > /tmp/
 curl -sS http://localhost:8082/catalog/items
 ```
 
+### Run with Docker Compose
+
+Alternatively, you can use Docker Compose to build and run the application:
+
+```bash
+docker-compose -f infra/docker-compose.yml up --build -d
+```
+
+This will start the application along with any required services defined in the `docker-compose.yml` file.
+
 Enable Keycloak JWT validation
 
 Set the issuer-uri to your realm, for example:
@@ -80,4 +90,3 @@ kill $(cat /tmp/catalog.pid) && rm -f /tmp/catalog.pid /tmp/catalog.log /tmp/cat
 Notes
 - The `local` profile is intentionally permissive for developer convenience. Do not enable it in CI or production.
 - The app will automatically enable the OAuth2 Resource Server config when `spring.security.oauth2.resourceserver.jwt.issuer-uri` is set.
-
