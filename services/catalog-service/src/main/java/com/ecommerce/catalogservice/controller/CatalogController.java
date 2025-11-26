@@ -29,12 +29,15 @@ public class CatalogController {
 
     @PostMapping("/items")
     public Item createItem(@RequestBody Item item) {
+        item.setCreatedAt(java.time.LocalDateTime.now());
+        item.setUpdatedAt(java.time.LocalDateTime.now());
         return itemService.createItem(item);
     }
 
     @PutMapping("/items/{id}")
     public ResponseEntity<Item> updateItem(@PathVariable Long id, @RequestBody Item itemDetails) {
         try {
+            itemDetails.setUpdatedAt(java.time.LocalDateTime.now());
             Item updatedItem = itemService.updateItem(id, itemDetails);
             return ResponseEntity.ok(updatedItem);
         } catch (RuntimeException e) {

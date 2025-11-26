@@ -27,12 +27,14 @@ public class ItemService {
     }
 
     public Item updateItem(Long id, Item itemDetails) {
-        return itemRepository.findById(id).map(item -> {
-            item.setSku(itemDetails.getSku());
-            item.setName(itemDetails.getName());
-            item.setPrice(itemDetails.getPrice());
-            return itemRepository.save(item);
-        }).orElseThrow(() -> new RuntimeException("Item not found"));
+        Item item = itemRepository.findById(id).orElseThrow(() -> new RuntimeException("Item not found"));
+        item.setName(itemDetails.getName());
+        item.setPrice(itemDetails.getPrice());
+        item.setDescription(itemDetails.getDescription());
+        item.setQuantity(itemDetails.getQuantity());
+        item.setCategory(itemDetails.getCategory());
+        item.setUpdatedAt(itemDetails.getUpdatedAt());
+        return itemRepository.save(item);
     }
 
     public void deleteItem(Long id) {
