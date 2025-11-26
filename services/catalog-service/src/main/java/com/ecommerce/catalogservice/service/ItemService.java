@@ -3,6 +3,8 @@ package com.ecommerce.catalogservice.service;
 import com.ecommerce.catalogservice.entity.Item;
 import com.ecommerce.catalogservice.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,5 +41,9 @@ public class ItemService {
 
     public void deleteItem(Long id) {
         itemRepository.deleteById(id);
+    }
+
+    public Page<Item> searchItems(String name, String category, Pageable pageable) {
+        return itemRepository.searchItems(name, category, pageable);
     }
 }

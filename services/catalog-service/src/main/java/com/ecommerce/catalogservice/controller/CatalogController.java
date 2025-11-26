@@ -5,6 +5,8 @@ import com.ecommerce.catalogservice.entity.Item;
 import com.ecommerce.catalogservice.service.ItemService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,5 +62,14 @@ public class CatalogController {
     public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
         itemService.deleteItem(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/items/search")
+    public Page<ItemDTO> searchItems(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            Pageable pageable) {
+        return itemService.searchItems(name, category, pageable)
+                .map(item -> modelMapper.map(item, ItemDTO.class));
     }
 }
