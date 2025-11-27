@@ -80,19 +80,134 @@ java -jar target/catalog-service-0.0.1-SNAPSHOT.jar
 
 ## Testing
 
-### Run integration tests
+### Run all tests (unit + integration + service tests)
 ```bash
 cd services/catalog-service
 mvn clean test
 ```
 
-**Note**: Integration tests use **Testcontainers** to spin up a PostgreSQL database automatically. No manual database setup is needed.
+**Test Summary**: 34 total tests
+- 15 unit tests (CatalogControllerTest)
+- 7 integration tests (CatalogControllerIntegrationTest)
+- 12 service tests (ItemServiceTest)
+
+### Run specific test classes
+
+#### Run only unit tests
+```bash
+cd services/catalog-service
+mvn test -Dtest=CatalogControllerTest
+```
+
+#### Run only integration tests
+```bash
+cd services/catalog-service
+mvn test -Dtest=CatalogControllerIntegrationTest
+```
+
+#### Run only service tests
+```bash
+cd services/catalog-service
+mvn test -Dtest=ItemServiceTest
+```
+
+### Run specific test methods
+```bash
+# Run a single test method
+mvn test -Dtest=CatalogControllerTest#shouldCreateItem_WithValidData
+
+# Run multiple test methods
+mvn test -Dtest=CatalogControllerTest#shouldCreateItem_WithValidData+shouldGetAllItems
+```
+
+### Run tests with verbose output
+```bash
+cd services/catalog-service
+mvn test -X
+```
+
+### Run tests and skip compilation
+```bash
+cd services/catalog-service
+mvn surefire:test
+```
+
+**Note**: 
+- Integration tests use **Testcontainers** to spin up a PostgreSQL database automatically. No manual database setup is needed.
+- Unit tests use mocked dependencies and run very fast (~1 second).
+- Integration tests take longer (~10-15 seconds) as they start a real database container.
 
 ### Test with coverage (if JaCoCo is configured)
 ```bash
 cd services/catalog-service
 mvn clean test jacoco:report
 ```
+
+### View test reports
+After running tests, view the HTML reports at:
+```
+services/catalog-service/target/surefire-reports/
+```
+
+---
+
+## Test Coverage
+
+### Unit Tests (CatalogControllerTest)
+Fast, isolated controller tests using mocked dependencies.
+
+**Tests (15 total)**:
+- ✅ `shouldGetAllItems` - Verify GET all items endpoint
+- ✅ `shouldGetItemById_WhenItemExists` - Verify GET by ID returns item
+- ✅ `shouldReturn404_WhenItemNotFound` - Verify 404 for missing item
+- ✅ `shouldCreateItem_WithValidData` - Verify POST creates item successfully
+- ✅ `shouldReturn400_WhenCreatingItemWithMissingName` - Verify validation rejects missing name
+- ✅ `shouldReturn400_WhenCreatingItemWithNegativePrice` - Verify validation rejects negative price
+- ✅ `shouldReturn400_WhenCreatingItemWithInvalidJson` - Verify malformed JSON returns 400
+- ✅ `shouldUpdateItem_WhenItemExists` - Verify PUT updates item
+- ✅ `shouldReturn404_WhenUpdatingNonExistentItem` - Verify 404 when updating missing item
+- ✅ `shouldDeleteItem` - Verify DELETE removes item
+- ✅ `shouldSearchItems_WithNameAndCategory` - Verify search with multiple filters
+- ✅ `shouldSearchItems_WithOnlyName` - Verify search with single filter
+- ✅ `shouldReturnEmptyResults_WhenSearchFindsNothing` - Verify empty results handling
+- ✅ `shouldHandleDefaultPaginationParameters` - Verify default pagination
+- ✅ `shouldReturn400_WhenInvalidPageNumberProvided` - Verify invalid pagination handling
+
+**Key Features**:
+- Uses `@WebMvcTest` for lightweight testing
+- Mocks `ItemService` and `ModelMapper`
+- Security filters disabled for easier testing
+- Runs in ~1 second
+
+### Integration Tests (CatalogControllerIntegrationTest)
+Full end-to-end tests with real database using Testcontainers.
+
+**Tests (7 total)**:
+- ✅ Full CRUD operations with PostgreSQL
+- ✅ Database transactions and rollbacks
+- ✅ Flyway migrations
+- ✅ Search with pagination
+- ✅ Real HTTP requests via MockMvc
+
+**Key Features**:
+- Uses `@SpringBootTest` with full context
+- Real PostgreSQL database via Testcontainers
+- Tests actual database queries and persistence
+- Runs in ~10-15 seconds
+
+### Service Tests (ItemServiceTest)
+Business logic tests with mocked repository.
+
+**Tests (12 total)**:
+- ✅ Service layer business logic
+- ✅ Repository interaction
+- ✅ Exception handling
+- ✅ Data transformation
+
+**Key Features**:
+- Unit tests for service layer
+- Mocked `ItemRepository`
+- Fast execution (~300ms)
 
 ---
 
@@ -183,7 +298,9 @@ curl -H "Authorization: Bearer <access_token>" http://localhost:8081/catalog/ite
 
 ## Troubleshooting
 
-### Issue: "no main manifest attribute, in /app/app.jar"
+### Build & Runtime Issues
+
+#### Issue: "no main manifest attribute, in /app/app.jar"
 
 **Cause**: The JAR file was not built correctly or doesn't contain the Spring Boot manifest.
 
@@ -193,7 +310,7 @@ cd services/catalog-service
 mvn clean package -DskipTests
 ```
 
-### Issue: Catalog service container keeps restarting
+#### Issue: Catalog service container keeps restarting
 
 **Check logs**:
 ```bash
@@ -205,7 +322,7 @@ docker logs catalog-service -f
 2. JAR file not built
 3. Port 8081 already in use
 
-### Issue: Cannot connect to database
+#### Issue: Cannot connect to database
 
 Ensure the PostgreSQL container is running:
 ```bash
@@ -217,6 +334,68 @@ Restart if needed:
 cd infra
 docker-compose restart catalog-postgres catalog-service
 ```
+
+### Test Issues
+
+#### Issue: "NoSuchBeanDefinitionException: No qualifying bean of type 'org.modelmapper.ModelMapper'"
+
+**Cause**: Unit test context doesn't include ModelMapper bean.
+
+**Solution**: This is already fixed in `CatalogControllerTest.java` with `@MockBean` annotation. If you see this error, ensure you have:
+```java
+@MockBean
+private org.modelmapper.ModelMapper modelMapper;
+```
+
+#### Issue: Tests fail with "401 Unauthorized" or "403 Forbidden"
+
+**Cause**: Spring Security filters are blocking test requests.
+
+**Solution**: Already fixed with `@AutoConfigureMockMvc(addFilters = false)`. Verify this annotation is present:
+```java
+@WebMvcTest(CatalogController.class)
+@AutoConfigureMockMvc(addFilters = false)
+class CatalogControllerTest {}
+```
+
+#### Issue: Integration tests fail with "Could not start container"
+
+**Cause**: Docker is not running or Testcontainers cannot access Docker daemon.
+
+**Solution**:
+1. Ensure Docker Desktop is running
+2. Check Docker is accessible: `docker ps`
+3. Grant Docker socket permissions if on Linux: `sudo chmod 666 /var/run/docker.sock`
+
+#### Issue: Tests fail with validation errors unexpectedly
+
+**Cause**: Missing validation dependency or annotations.
+
+**Solution**: Ensure `spring-boot-starter-validation` is in `pom.xml`:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+And DTOs have validation annotations:
+```java
+@NotBlank(message = "Name is required")
+private String name;
+
+@Positive(message = "Price must be positive")
+private Double price;
+```
+
+#### Issue: Test coverage reports not generated
+
+**Solution**: Add JaCoCo plugin to `pom.xml` and run:
+```bash
+mvn clean test jacoco:report
+```
+
+View report at: `target/site/jacoco/index.html`
 
 ---
 

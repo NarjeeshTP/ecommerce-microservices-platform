@@ -3,6 +3,7 @@ package com.ecommerce.catalogservice.controller;
 import com.ecommerce.catalogservice.dto.ItemDTO;
 import com.ecommerce.catalogservice.entity.Item;
 import com.ecommerce.catalogservice.service.ItemService;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -39,7 +40,7 @@ public class CatalogController {
     }
 
     @PostMapping("/items")
-    public ItemDTO createItem(@RequestBody ItemDTO itemDTO) {
+    public ItemDTO createItem(@Valid @RequestBody ItemDTO itemDTO) {
         Item item = modelMapper.map(itemDTO, Item.class);
         item.setCreatedAt(java.time.LocalDateTime.now());
         item.setUpdatedAt(java.time.LocalDateTime.now());
@@ -47,7 +48,7 @@ public class CatalogController {
     }
 
     @PutMapping("/items/{id}")
-    public ResponseEntity<ItemDTO> updateItem(@PathVariable Long id, @RequestBody ItemDTO itemDTO) {
+    public ResponseEntity<ItemDTO> updateItem(@PathVariable Long id, @Valid @RequestBody ItemDTO itemDTO) {
         try {
             Item item = modelMapper.map(itemDTO, Item.class);
             item.setUpdatedAt(java.time.LocalDateTime.now());

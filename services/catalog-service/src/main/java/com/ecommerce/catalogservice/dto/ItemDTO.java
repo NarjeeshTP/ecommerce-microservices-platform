@@ -1,13 +1,21 @@
 package com.ecommerce.catalogservice.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+
 import java.time.LocalDateTime;
 
 public class ItemDTO {
 
     private Long id;
     private String sku;
+
+    @NotBlank(message = "Name is required")
     private String name;
+
+    @Positive(message = "Price must be positive")
     private Double price;
+
     private String description;
     private Integer quantity;
     private String category;
