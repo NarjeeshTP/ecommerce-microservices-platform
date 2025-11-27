@@ -216,12 +216,39 @@ Located in `docs/api/`:
 
 ## 🧪 Testing Strategy
 
-- Unit tests – JUnit, Mockito  
-- Integration tests – Testcontainers  
-- Contract tests – Pact  
-- E2E tests – Local Kubernetes environment  
-- Load tests – k6  
-- Chaos tests – automated fault injection  
+We follow the **60/30/10 Testing Pyramid**:
+
+- **Unit Tests (60%)** – JUnit, Mockito, fast isolation testing  
+- **Integration Tests (30%)** – Testcontainers, Spring Boot Test  
+- **E2E Tests (10%)** – Critical user journeys across microservices  
+- **Contract Tests** – Pact for API contract validation  
+- **Load Tests** – k6 for performance validation  
+- **Chaos Tests** – Automated fault injection  
+
+### 📚 Testing Documentation
+
+- **[Complete Testing Strategy](docs/testing-strategy.md)** - Comprehensive guide with examples
+- **[E2E Quick Reference](docs/E2E-QUICK-REFERENCE.md)** - E2E testing patterns and when to use them
+
+### Current Test Coverage (Catalog Service)
+
+| Test Type | Count | Execution Time | Purpose |
+|-----------|-------|----------------|---------|
+| Unit Tests | 29 | ~100ms | Business logic & validation |
+| Integration Tests | 7 | ~10s | Full stack with real database |
+| E2E Tests | TBD | ~60s | Cross-service user journeys |
+
+**Run Tests:**
+```bash
+# Fast unit tests only
+mvn test -Dtest="*Test"
+
+# Integration tests with Testcontainers
+mvn test -Dtest="*IntegrationTest"
+
+# All tests
+mvn test
+```  
 
 ---
 
