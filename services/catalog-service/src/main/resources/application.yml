@@ -1,6 +1,8 @@
 spring:
   application:
     name: catalog-service
+  profiles:
+    active: local
   datasource:
     url: jdbc:postgresql://localhost:5433/catalog_db
     username: catalog_user

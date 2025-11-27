@@ -1,92 +1,248 @@
-# Catalog Service — Local run & auth notes
+# Catalog Service
 
-This README explains how to run the `catalog-service` locally and how authentication is configured for local dev vs. an OAuth2 provider (Keycloak).
+This is the Catalog Service for the E-Commerce Microservices Platform. It manages product catalog including items, categories, pricing, and inventory information.
 
-Quick summary
-- Dev/local profile: `--spring.profiles.active=local` enables a permissive `SecurityConfig` so `/catalog/**` endpoints are accessible without a token.
-- Production/auth mode: set `spring.security.oauth2.resourceserver.jwt.issuer-uri` (e.g. Keycloak realm URL) and the application will validate JWTs.
+## Service URL
+- **Default Port**: `http://localhost:8081`
+- **Actuator Health Check**: `http://localhost:8081/actuator/health`
 
-Build
+## Prerequisites
+- **Docker and Docker Compose** running
+- **Java 17+** installed
+- **Maven 3.6+** installed
 
-From repo root (preferred Dockerized Maven):
+---
 
-```bash
-# from repo root
-docker run --rm --platform linux/amd64 \
-  -v "$(pwd)/services/catalog-service":/workspace -w /workspace \
-  maven:3.9.6-eclipse-temurin-17 mvn -DskipTests package -B
-```
+## Build Commands
 
-Or with a local Maven installation:
-
+### 1. Build the JAR file (skip tests)
 ```bash
 cd services/catalog-service
-mvn -DskipTests package
-cd -
+mvn clean package -DskipTests
 ```
 
-Run locally (two common modes)
+### 2. Build with tests
+```bash
+cd services/catalog-service
+mvn clean package
+```
 
-1) Default (no `local` profile) — Spring Security will be active (useful to test real auth behavior):
+### 3. Quick build and deploy (one-liner)
+```bash
+cd services/catalog-service && mvn clean package -DskipTests && cd ../../infra && docker-compose up --build -d catalog-service
+```
+
+---
+
+## Run Commands
+
+### Option 1: Run with Docker Compose (Recommended)
+
+#### Start all infrastructure + catalog service
+```bash
+cd infra
+docker-compose up -d
+```
+
+#### Rebuild and restart catalog service only
+```bash
+cd infra
+docker-compose up --build -d catalog-service
+```
+
+#### Stop all services
+```bash
+cd infra
+docker-compose down
+```
+
+### Option 2: Run Locally without Docker
+
+#### 1. Start only the database
+```bash
+cd infra
+docker-compose up -d catalog-postgres
+```
+
+#### 2. Run the application using Maven
+```bash
+cd services/catalog-service
+mvn spring-boot:run
+```
+
+#### 3. Run the JAR directly
+```bash
+cd services/catalog-service
+java -jar target/catalog-service-0.0.1-SNAPSHOT.jar
+```
+
+---
+
+## Testing
+
+### Run integration tests
+```bash
+cd services/catalog-service
+mvn clean test
+```
+
+**Note**: Integration tests use **Testcontainers** to spin up a PostgreSQL database automatically. No manual database setup is needed.
+
+### Test with coverage (if JaCoCo is configured)
+```bash
+cd services/catalog-service
+mvn clean test jacoco:report
+```
+
+---
+
+## Verify Service is Running
+
+### Check Docker logs
+```bash
+docker logs catalog-service -f
+```
+
+### Check health endpoint
+```bash
+curl http://localhost:8081/actuator/health
+```
+
+### Test API endpoints
+
+#### Search all items (paginated)
+```bash
+curl "http://localhost:8081/catalog/items/search?page=0&size=10"
+```
+
+#### Get item by ID
+```bash
+curl http://localhost:8081/catalog/items/1
+```
+
+#### Search by category
+```bash
+curl "http://localhost:8081/catalog/items/search?category=Electronics&page=0&size=10"
+```
+
+---
+
+## Authentication & Security
+
+### Local Development (Permissive Mode)
+
+For local development, security is temporarily disabled to allow easy testing via Postman or curl without authentication.
+
+**Important**: This is only for local development. Do not use this configuration in CI/CD or production environments.
+
+### Production (Keycloak JWT Authentication)
+
+In production, the service uses OAuth2 JWT tokens from Keycloak.
+
+#### Enable Keycloak JWT validation
+
+Set the `issuer-uri` to your realm:
 
 ```bash
-JAR=services/catalog-service/target/catalog-service-0.0.1-SNAPSHOT.jar
-nohup java -jar "$JAR" --server.port=8082 > /tmp/catalog.log 2>&1 & echo $! > /tmp/catalog.pid
+java -jar target/catalog-service-0.0.1-SNAPSHOT.jar \
+  --server.port=8081 \
+  --spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8080/realms/myrealm
 ```
 
-Expect endpoints to require authentication unless you set `spring.security.oauth2.resourceserver.jwt.issuer-uri`.
+#### Get an access token (local Keycloak)
 
-2) Development mode (permissive):
-
-```bash
-# stop previous
-if [ -f /tmp/catalog.pid ]; then kill $(cat /tmp/catalog.pid) || true; rm -f /tmp/catalog.pid; fi
-nohup java -jar "$JAR" --server.port=8082 --spring.profiles.active=local > /tmp/catalog.log 2>&1 & echo $! > /tmp/catalog.pid
-curl -sS http://localhost:8082/catalog/items
-```
-
-### Run with Docker Compose
-
-Alternatively, you can use Docker Compose to build and run the application:
-
-```bash
-docker-compose -f infra/docker-compose.yml up --build -d
-```
-
-This will start the application along with any required services defined in the `docker-compose.yml` file.
-
-Enable Keycloak JWT validation
-
-Set the issuer-uri to your realm, for example:
-
-```bash
-nohup java -jar "$JAR" \
-  --server.port=8082 \
-  --spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8080/realms/myrealm \
-  > /tmp/catalog.log 2>&1 & echo $! > /tmp/catalog.pid
-```
-
-Get an access token (local Keycloak)
-
-If you followed the repo `infra/keycloak` quickstart, use `infra/keycloak/get-token.sh` to get a token:
+If you have Keycloak running locally, use the helper script:
 
 ```bash
 chmod +x infra/keycloak/get-token.sh
 infra/keycloak/get-token.sh myrealm myclient testuser password
 ```
 
-Then call the service using the token:
+#### Call the API with the token
 
 ```bash
-curl -H "Authorization: Bearer <access_token>" http://localhost:8082/catalog/items
+curl -H "Authorization: Bearer <access_token>" http://localhost:8081/catalog/items
 ```
 
-Stop and cleanup
+---
 
+## API Endpoints
+
+### Public Endpoints (Local Dev Only)
+- `GET /catalog/items/search` - Search items with optional filters (name, category, pagination)
+- `GET /catalog/items/{id}` - Get item by ID
+- `POST /catalog/items` - Create a new item
+- `PUT /catalog/items/{id}` - Update an item
+- `DELETE /catalog/items/{id}` - Delete an item
+
+### Actuator Endpoints
+- `GET /actuator/health` - Health check
+- `GET /actuator/info` - Service info
+
+---
+
+## Troubleshooting
+
+### Issue: "no main manifest attribute, in /app/app.jar"
+
+**Cause**: The JAR file was not built correctly or doesn't contain the Spring Boot manifest.
+
+**Solution**: Rebuild the project with Maven:
 ```bash
-kill $(cat /tmp/catalog.pid) && rm -f /tmp/catalog.pid /tmp/catalog.log /tmp/catalog.response
+cd services/catalog-service
+mvn clean package -DskipTests
 ```
 
-Notes
-- The `local` profile is intentionally permissive for developer convenience. Do not enable it in CI or production.
-- The app will automatically enable the OAuth2 Resource Server config when `spring.security.oauth2.resourceserver.jwt.issuer-uri` is set.
+### Issue: Catalog service container keeps restarting
+
+**Check logs**:
+```bash
+docker logs catalog-service -f
+```
+
+**Common causes**:
+1. Database not ready yet (wait a few seconds)
+2. JAR file not built
+3. Port 8081 already in use
+
+### Issue: Cannot connect to database
+
+Ensure the PostgreSQL container is running:
+```bash
+docker ps | grep catalog-postgres
+```
+
+Restart if needed:
+```bash
+cd infra
+docker-compose restart catalog-postgres catalog-service
+```
+
+---
+
+## Notes
+
+- The `local` profile is intentionally permissive for developer convenience. **Do not enable it in CI or production.**
+- The app will automatically enable OAuth2 Resource Server config when `spring.security.oauth2.resourceserver.jwt.issuer-uri` is set.
+- Integration tests use **Testcontainers** to manage test databases automatically.
+- For Postman testing, authentication is disabled in local development mode.
+
+---
+
+## Database Schema
+
+The service uses **Flyway** for database migrations. Migration scripts are located in:
+```
+src/main/resources/db/migration/
+```
+
+Database table: `item`
+- `id` (BIGINT, primary key)
+- `sku` (VARCHAR, unique)
+- `name` (VARCHAR)
+- `description` (TEXT)
+- `price` (NUMERIC)
+- `quantity` (INT)
+- `category` (VARCHAR)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)

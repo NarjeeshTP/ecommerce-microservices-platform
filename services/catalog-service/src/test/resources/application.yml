@@ -1,0 +1,16 @@
+spring:
+  profiles:
+    active: local
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    clean-disabled: false
+
+logging:
+  level:
+    org.testcontainers: INFO
+    com.ecommerce.catalogservice: DEBUG
+
