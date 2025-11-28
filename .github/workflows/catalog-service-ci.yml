@@ -15,6 +15,13 @@ on:
       - '.github/workflows/catalog-service-ci.yml'
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+  packages: write
+
 jobs:
   test:
     name: Unit & Integration Tests
