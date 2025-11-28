@@ -2,9 +2,9 @@ name: Monorepo CI
 
 on:
   push:
-    branches: [ main, develop, staging ]
+    branches: [ master, main, develop, staging ]
   pull_request:
-    branches: [ main, develop, staging ]
+    branches: [ master, main, develop, staging ]
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:

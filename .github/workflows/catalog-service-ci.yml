@@ -2,13 +2,13 @@ name: Catalog Service CI
 
 on:
   push:
-    branches: [ main, develop, staging ]
+    branches: [ master, main, develop, staging ]
     paths:
       - 'services/catalog-service/**'
       - 'platform-libraries/**'
       - '.github/workflows/catalog-service-ci.yml'
   pull_request:
-    branches: [ main, develop, staging ]
+    branches: [ master, main, develop, staging ]
     paths:
       - 'services/catalog-service/**'
       - 'platform-libraries/**'
