@@ -227,8 +227,7 @@ We follow the **60/30/10 Testing Pyramid**:
 
 ### 📚 Testing Documentation
 
-- **[Complete Testing Strategy](docs/testing-strategy.md)** - Comprehensive guide with examples
-- **[E2E Quick Reference](docs/E2E-QUICK-REFERENCE.md)** - E2E testing patterns and when to use them
+**[E2E Quick Reference](docs/E2E-QUICK-REFERENCE.md)** - E2E testing patterns and when to use them
 
 ### Current Test Coverage (Catalog Service)
 
@@ -352,3 +351,6 @@ To build:
 - readiness for enterprise digital teams  
 - a strong public technical portfolio  
 - long-term content creation for Medium and YouTube
+
+
+# CI/CD Pipeline Test
