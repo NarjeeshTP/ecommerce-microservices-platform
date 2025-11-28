@@ -661,5 +661,3 @@ Database table: `item`
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 # CI/CD Pipeline Test
-
-<!-- CI trigger: 2025-11-28 10:47:52 -->
