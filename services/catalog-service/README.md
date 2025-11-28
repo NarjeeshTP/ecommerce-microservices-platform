@@ -660,4 +660,8 @@ Database table: `item`
 - `category` (VARCHAR)
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
+
+---
+
+<!-- CI Trigger -->
 # CI/CD Pipeline Test
