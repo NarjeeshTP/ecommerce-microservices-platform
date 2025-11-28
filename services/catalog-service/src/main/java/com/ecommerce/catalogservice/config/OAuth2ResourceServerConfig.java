@@ -6,9 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@EnableWebSecurity
 @Profile("!local") // Only active when 'local' profile is NOT active
 @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.jwt", name = "issuer-uri")
 public class OAuth2ResourceServerConfig {
@@ -20,6 +22,7 @@ public class OAuth2ResourceServerConfig {
                 .requestMatchers("/catalog/**").authenticated()
                 .anyRequest().authenticated()
             )
+            .csrf(csrf -> csrf.disable())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
         return http.build();
