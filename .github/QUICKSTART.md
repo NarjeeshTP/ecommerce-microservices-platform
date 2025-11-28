@@ -63,8 +63,34 @@ git push origin main
 ## 🔧 GitHub Setup (After First Push)
 
 ### 1. Verify First Run
+
+**Important:** The catalog-service CI workflows use **path filtering** and only run when:
+- Files in `services/catalog-service/**` change
+- Files in `platform-libraries/**` change
+- The workflow file itself changes
+
+If you only pushed `.github/` changes, the workflows won't trigger automatically.
+
+**To trigger the workflows for testing:**
+
+**Option A: Make a small change to catalog-service**
+```bash
+cd /Users/narjeeshabdulkhadar/ecommerce-microservices-platform
+echo "# CI Test" >> services/catalog-service/README.md
+git add services/catalog-service/README.md
+git commit -m "test: trigger CI pipeline"
+git push origin main
+```
+
+**Option B: Manually trigger from GitHub UI**
+1. Go to **GitHub repository** → **Actions** tab
+2. Click on **"Catalog Service CI"** workflow (left sidebar)
+3. Click **"Run workflow"** button (top right)
+4. Select branch and click **"Run workflow"**
+
+**Then verify:**
 - [ ] Go to **GitHub repository** → **Actions** tab
-- [ ] See workflows appear automatically
+- [ ] See workflows appear (should see 2-3 workflows running)
 - [ ] Click on running workflow
 - [ ] Verify jobs complete:
   - ✅ Test Job (~30 seconds)
