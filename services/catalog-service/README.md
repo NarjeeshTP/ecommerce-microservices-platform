@@ -296,6 +296,241 @@ curl -H "Authorization: Bearer <access_token>" http://localhost:8081/catalog/ite
 
 ---
 
+## Example Requests
+
+### 1. Create an Item (POST)
+
+```bash
+curl -X POST http://localhost:8081/catalog/items \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "LAPTOP-001",
+    "name": "Dell XPS 13",
+    "description": "13-inch laptop with Intel Core i7 processor",
+    "price": 1299.99,
+    "quantity": 50,
+    "category": "Electronics"
+  }'
+```
+
+**Expected Response (201 Created)**:
+```json
+{
+  "id": 1,
+  "sku": "LAPTOP-001",
+  "name": "Dell XPS 13",
+  "description": "13-inch laptop with Intel Core i7 processor",
+  "price": 1299.99,
+  "quantity": 50,
+  "category": "Electronics",
+  "createdAt": "2025-11-28T10:30:00Z",
+  "updatedAt": "2025-11-28T10:30:00Z"
+}
+```
+
+### 2. Get All Items (GET with Pagination)
+
+```bash
+curl "http://localhost:8081/catalog/items/search?page=0&size=10"
+```
+
+**Expected Response (200 OK)**:
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "sku": "LAPTOP-001",
+      "name": "Dell XPS 13",
+      "description": "13-inch laptop with Intel Core i7 processor",
+      "price": 1299.99,
+      "quantity": 50,
+      "category": "Electronics",
+      "createdAt": "2025-11-28T10:30:00Z",
+      "updatedAt": "2025-11-28T10:30:00Z"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 10,
+    "offset": 0,
+    "paged": true,
+    "unpaged": false
+  },
+  "totalPages": 1,
+  "totalElements": 1,
+  "last": true,
+  "first": true,
+  "size": 10,
+  "number": 0,
+  "numberOfElements": 1,
+  "empty": false
+}
+```
+
+### 3. Search Items by Category
+
+```bash
+curl "http://localhost:8081/catalog/items/search?category=Electronics&page=0&size=10"
+```
+
+### 4. Search Items by Name
+
+```bash
+curl "http://localhost:8081/catalog/items/search?name=Dell&page=0&size=10"
+```
+
+### 5. Search Items by Name and Category
+
+```bash
+curl "http://localhost:8081/catalog/items/search?name=Dell&category=Electronics&page=0&size=10"
+```
+
+### 6. Get Item by ID
+
+```bash
+curl http://localhost:8081/catalog/items/1
+```
+
+**Expected Response (200 OK)**:
+```json
+{
+  "id": 1,
+  "sku": "LAPTOP-001",
+  "name": "Dell XPS 13",
+  "description": "13-inch laptop with Intel Core i7 processor",
+  "price": 1299.99,
+  "quantity": 50,
+  "category": "Electronics",
+  "createdAt": "2025-11-28T10:30:00Z",
+  "updatedAt": "2025-11-28T10:30:00Z"
+}
+```
+
+**Expected Response (404 Not Found)**:
+```json
+{
+  "timestamp": "2025-11-28T10:30:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Item not found with id: 999",
+  "path": "/catalog/items/999"
+}
+```
+
+### 7. Update an Item (PUT)
+
+```bash
+curl -X PUT http://localhost:8081/catalog/items/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "LAPTOP-001",
+    "name": "Dell XPS 13 (Updated)",
+    "description": "13-inch laptop with Intel Core i7 processor - 16GB RAM",
+    "price": 1399.99,
+    "quantity": 45,
+    "category": "Electronics"
+  }'
+```
+
+**Expected Response (200 OK)**:
+```json
+{
+  "id": 1,
+  "sku": "LAPTOP-001",
+  "name": "Dell XPS 13 (Updated)",
+  "description": "13-inch laptop with Intel Core i7 processor - 16GB RAM",
+  "price": 1399.99,
+  "quantity": 45,
+  "category": "Electronics",
+  "createdAt": "2025-11-28T10:30:00Z",
+  "updatedAt": "2025-11-28T10:45:00Z"
+}
+```
+
+### 8. Delete an Item (DELETE)
+
+```bash
+curl -X DELETE http://localhost:8081/catalog/items/1
+```
+
+**Expected Response (204 No Content)**: Empty response body
+
+### 9. Validation Error Examples
+
+#### Missing required field (name)
+```bash
+curl -X POST http://localhost:8081/catalog/items \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "LAPTOP-002",
+    "price": 1299.99,
+    "quantity": 50,
+    "category": "Electronics"
+  }'
+```
+
+**Expected Response (400 Bad Request)**:
+```json
+{
+  "timestamp": "2025-11-28T10:30:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Name is required",
+  "path": "/catalog/items"
+}
+```
+
+#### Negative price
+```bash
+curl -X POST http://localhost:8081/catalog/items \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "LAPTOP-003",
+    "name": "Invalid Item",
+    "price": -99.99,
+    "quantity": 50,
+    "category": "Electronics"
+  }'
+```
+
+**Expected Response (400 Bad Request)**:
+```json
+{
+  "timestamp": "2025-11-28T10:30:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Price must be positive",
+  "path": "/catalog/items"
+}
+```
+
+### 10. Health Check
+
+```bash
+curl http://localhost:8081/actuator/health
+```
+
+**Expected Response (200 OK)**:
+```json
+{
+  "status": "UP"
+}
+```
+
+---
+
+## OpenAPI Specification
+
+The complete OpenAPI specification is available at:
+```
+docs/api/catalog.yaml
+```
+
+You can view and test the API using Swagger UI (if enabled) or import the spec into Postman.
+
+---
+
 ## Troubleshooting
 
 ### Build & Runtime Issues

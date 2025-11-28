@@ -1,18 +1,468 @@
 openapi: "3.0.1"
 info:
   title: Catalog API
+  description: API for managing product catalog in the e-commerce microservices platform
   version: "0.1.0"
+  contact:
+    name: Platform Team
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+  - url: https://catalog.ecommerce.example.com
+    description: Production server
+
 paths:
-  /catalog/items:
+  /catalog/items/search:
     get:
-      summary: List catalog items
+      summary: Search catalog items
+      description: Search and filter catalog items with optional pagination
+      operationId: searchItems
+      tags:
+        - Catalog
+      parameters:
+        - name: name
+          in: query
+          description: Filter by item name (partial match)
+          required: false
+          schema:
+            type: string
+          example: "Dell"
+        - name: category
+          in: query
+          description: Filter by category (exact match)
+          required: false
+          schema:
+            type: string
+          example: "Electronics"
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          example: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          example: 10
       responses:
         '200':
-          description: OK
+          description: Successful response with paginated items
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
+                $ref: '#/components/schemas/PagedItemResponse'
+              examples:
+                success:
+                  $ref: '#/components/examples/PagedItemsExample'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
+  /catalog/items/{id}:
+    get:
+      summary: Get item by ID
+      description: Retrieve a single catalog item by its ID
+      operationId: getItemById
+      tags:
+        - Catalog
+      parameters:
+        - name: id
+          in: path
+          description: Item ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: Item found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+              examples:
+                success:
+                  $ref: '#/components/examples/ItemExample'
+        '404':
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2025-11-28T10:30:00Z"
+                status: 404
+                error: "Not Found"
+                message: "Item not found with id: 1"
+                path: "/catalog/items/1"
+
+    put:
+      summary: Update an item
+      description: Update an existing catalog item
+      operationId: updateItem
+      tags:
+        - Catalog
+      parameters:
+        - name: id
+          in: path
+          description: Item ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+            examples:
+              updateItem:
+                $ref: '#/components/examples/UpdateItemRequestExample'
+      responses:
+        '200':
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete an item
+      description: Delete a catalog item by ID
+      operationId: deleteItem
+      tags:
+        - Catalog
+      parameters:
+        - name: id
+          in: path
+          description: Item ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '204':
+          description: Item deleted successfully
+        '404':
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /catalog/items:
+    post:
+      summary: Create a new item
+      description: Create a new catalog item
+      operationId: createItem
+      tags:
+        - Catalog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+            examples:
+              createItem:
+                $ref: '#/components/examples/CreateItemRequestExample'
+      responses:
+        '201':
+          description: Item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+              examples:
+                success:
+                  $ref: '#/components/examples/ItemExample'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingName:
+                  $ref: '#/components/examples/ValidationErrorExample'
+
+  /actuator/health:
+    get:
+      summary: Health check endpoint
+      description: Check the health status of the service
+      operationId: health
+      tags:
+        - Actuator
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique item identifier
+          example: 1
+        sku:
+          type: string
+          description: Stock Keeping Unit
+          example: "LAPTOP-001"
+        name:
+          type: string
+          description: Item name
+          example: "Dell XPS 13"
+        description:
+          type: string
+          description: Item description
+          example: "13-inch laptop with Intel Core i7 processor"
+        price:
+          type: number
+          format: double
+          description: Item price
+          example: 1299.99
+        quantity:
+          type: integer
+          description: Available quantity
+          example: 50
+        category:
+          type: string
+          description: Item category
+          example: "Electronics"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-11-28T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-11-28T10:30:00Z"
+
+    ItemRequest:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        sku:
+          type: string
+          description: Stock Keeping Unit
+          example: "LAPTOP-001"
+        name:
+          type: string
+          description: Item name (required)
+          minLength: 1
+          example: "Dell XPS 13"
+        description:
+          type: string
+          description: Item description
+          example: "13-inch laptop with Intel Core i7 processor"
+        price:
+          type: number
+          format: double
+          description: Item price (required, must be positive)
+          minimum: 0.01
+          example: 1299.99
+        quantity:
+          type: integer
+          description: Available quantity
+          minimum: 0
+          example: 50
+        category:
+          type: string
+          description: Item category
+          example: "Electronics"
+
+    PagedItemResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+              example: 0
+            pageSize:
+              type: integer
+              example: 10
+            offset:
+              type: integer
+              example: 0
+            paged:
+              type: boolean
+              example: true
+            unpaged:
+              type: boolean
+              example: false
+        totalPages:
+          type: integer
+          example: 5
+        totalElements:
+          type: integer
+          format: int64
+          example: 50
+        last:
+          type: boolean
+          example: false
+        first:
+          type: boolean
+          example: true
+        size:
+          type: integer
+          example: 10
+        number:
+          type: integer
+          example: 0
+        numberOfElements:
+          type: integer
+          example: 10
+        empty:
+          type: boolean
+          example: false
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2025-11-28T10:30:00Z"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        error:
+          type: string
+          description: Error type
+          example: "Bad Request"
+        message:
+          type: string
+          description: Error message
+          example: "Name is required"
+        path:
+          type: string
+          description: Request path
+          example: "/catalog/items"
+
+  examples:
+    ItemExample:
+      summary: Sample catalog item
+      value:
+        id: 1
+        sku: "LAPTOP-001"
+        name: "Dell XPS 13"
+        description: "13-inch laptop with Intel Core i7 processor"
+        price: 1299.99
+        quantity: 50
+        category: "Electronics"
+        createdAt: "2025-11-28T10:30:00Z"
+        updatedAt: "2025-11-28T10:30:00Z"
+
+    CreateItemRequestExample:
+      summary: Create item request
+      value:
+        sku: "LAPTOP-001"
+        name: "Dell XPS 13"
+        description: "13-inch laptop with Intel Core i7 processor"
+        price: 1299.99
+        quantity: 50
+        category: "Electronics"
+
+    UpdateItemRequestExample:
+      summary: Update item request
+      value:
+        sku: "LAPTOP-001"
+        name: "Dell XPS 13 (Updated)"
+        description: "13-inch laptop with Intel Core i7 processor - 16GB RAM"
+        price: 1399.99
+        quantity: 45
+        category: "Electronics"
+
+    PagedItemsExample:
+      summary: Paginated items response
+      value:
+        content:
+          - id: 1
+            sku: "LAPTOP-001"
+            name: "Dell XPS 13"
+            description: "13-inch laptop with Intel Core i7 processor"
+            price: 1299.99
+            quantity: 50
+            category: "Electronics"
+            createdAt: "2025-11-28T10:30:00Z"
+            updatedAt: "2025-11-28T10:30:00Z"
+        pageable:
+          pageNumber: 0
+          pageSize: 10
+          offset: 0
+          paged: true
+          unpaged: false
+        totalPages: 1
+        totalElements: 1
+        last: true
+        first: true
+        size: 10
+        number: 0
+        numberOfElements: 1
+        empty: false
+
+    ValidationErrorExample:
+      summary: Validation error response
+      value:
+        timestamp: "2025-11-28T10:30:00Z"
+        status: 400
+        error: "Bad Request"
+        message: "Name is required"
+        path: "/catalog/items"
+
+tags:
+  - name: Catalog
+    description: Catalog item management operations
+  - name: Actuator
+    description: Service health and monitoring endpoints
