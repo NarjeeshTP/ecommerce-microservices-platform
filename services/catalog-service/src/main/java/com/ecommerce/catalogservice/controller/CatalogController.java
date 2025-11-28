@@ -49,14 +49,10 @@ public class CatalogController {
 
     @PutMapping("/items/{id}")
     public ResponseEntity<ItemDTO> updateItem(@PathVariable Long id, @Valid @RequestBody ItemDTO itemDTO) {
-        try {
-            Item item = modelMapper.map(itemDTO, Item.class);
-            item.setUpdatedAt(java.time.LocalDateTime.now());
-            Item updatedItem = itemService.updateItem(id, item);
-            return ResponseEntity.ok(modelMapper.map(updatedItem, ItemDTO.class));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Item item = modelMapper.map(itemDTO, Item.class);
+        item.setUpdatedAt(java.time.LocalDateTime.now());
+        Item updatedItem = itemService.updateItem(id, item);
+        return ResponseEntity.ok(modelMapper.map(updatedItem, ItemDTO.class));
     }
 
     @DeleteMapping("/items/{id}")

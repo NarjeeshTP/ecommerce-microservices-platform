@@ -1,6 +1,7 @@
 package com.ecommerce.catalogservice.service;
 
 import com.ecommerce.catalogservice.entity.Item;
+import com.ecommerce.catalogservice.exception.ResourceNotFoundException;
 import com.ecommerce.catalogservice.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,7 +30,8 @@ public class ItemService {
     }
 
     public Item updateItem(Long id, Item itemDetails) {
-        Item item = itemRepository.findById(id).orElseThrow(() -> new RuntimeException("Item not found"));
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Item", "id", id));
         item.setName(itemDetails.getName());
         item.setPrice(itemDetails.getPrice());
         item.setDescription(itemDetails.getDescription());
@@ -40,6 +42,9 @@ public class ItemService {
     }
 
     public void deleteItem(Long id) {
+        if (!itemRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Item", "id", id);
+        }
         itemRepository.deleteById(id);
     }
 

@@ -241,7 +241,7 @@ class CatalogControllerTest {
     void shouldReturn404_WhenUpdatingNonExistentItem() throws Exception {
         // Arrange
         when(itemService.updateItem(eq(999L), any(Item.class)))
-                .thenThrow(new RuntimeException("Item not found"));
+                .thenThrow(new com.ecommerce.catalogservice.exception.ResourceNotFoundException("Item", "id", 999L));
 
         ItemDTO updateDTO = new ItemDTO();
         updateDTO.setName("Updated Item");

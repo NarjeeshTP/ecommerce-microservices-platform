@@ -165,12 +165,14 @@ class ItemServiceTest {
     @Test
     void shouldDeleteItem() {
         // Arrange
+        when(itemRepository.existsById(1L)).thenReturn(true);
         doNothing().when(itemRepository).deleteById(1L);
 
         // Act
         itemService.deleteItem(1L);
 
         // Assert
+        verify(itemRepository, times(1)).existsById(1L);
         verify(itemRepository, times(1)).deleteById(1L);
     }
 
