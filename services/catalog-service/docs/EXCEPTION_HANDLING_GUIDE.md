@@ -217,6 +217,10 @@ To add this pattern to Pricing/Inventory/Order services:
 
 ### Phase 2 Requirements (Still Needed)
 1. **Correlation ID Filter** - Generate and propagate request IDs
+   - **Why?** Track requests across microservices for debugging & monitoring
+   - **Status:** Currently returns `null` in error responses (MDC not set)
+   - **See:** `CORRELATION_ID_GUIDE.md` for complete explanation & implementation
+   - **Effort:** ~1 hour implementation
 2. **OpenAPI Integration** - Document error responses in Swagger
 3. **Helm Charts** - Complete Kubernetes deployment configs
 

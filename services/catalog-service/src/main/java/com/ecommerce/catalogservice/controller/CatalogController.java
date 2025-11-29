@@ -33,10 +33,10 @@ public class CatalogController {
     }
 
     @GetMapping("/items/{id}")
-    public ResponseEntity<ItemDTO> getItemById(@PathVariable Long id) {
-        Optional<Item> item = itemService.getItemById(id);
-        return item.map(value -> ResponseEntity.ok(modelMapper.map(value, ItemDTO.class)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ItemDTO getItemById(@PathVariable Long id) {
+        Item item = itemService.getItemById(id)
+                .orElseThrow(() -> new com.ecommerce.catalogservice.exception.ResourceNotFoundException("Item", "id", id));
+        return modelMapper.map(item, ItemDTO.class);
     }
 
     @PostMapping("/items")

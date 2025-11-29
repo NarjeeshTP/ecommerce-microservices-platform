@@ -141,11 +141,16 @@ class CatalogControllerTest {
     @Test
     void shouldReturn404_WhenItemNotFound() throws Exception {
         // Arrange
-        when(itemService.getItemById(999L)).thenReturn(Optional.empty());
+        when(itemService.getItemById(999L))
+                .thenReturn(Optional.empty());
 
         // Act & Assert
+        // Note: This is a unit test with filters disabled, so correlationId will be null
+        // Correlation ID testing is done in integration tests (CatalogControllerIntegrationTest)
         mockMvc.perform(get("/catalog/items/999"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").exists());
 
         verify(itemService, times(1)).getItemById(999L);
     }

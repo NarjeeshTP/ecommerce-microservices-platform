@@ -134,6 +134,39 @@ class CatalogControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.totalPages").value(3));
     }
 
+    @Test
+    void shouldReturnCorrelationIdInResponseHeader() throws Exception {
+        // When: make request without correlation ID
+        mockMvc.perform(get("/catalog/items"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("X-Correlation-ID"));
+    }
+
+    @Test
+    void shouldPreserveCustomCorrelationId() throws Exception {
+        // Given: custom correlation ID
+        String customCorrelationId = "test-correlation-123";
+
+        // When: make request with custom correlation ID
+        mockMvc.perform(get("/catalog/items")
+                        .header("X-Correlation-ID", customCorrelationId))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Correlation-ID", customCorrelationId));
+    }
+
+    @Test
+    void shouldIncludeCorrelationIdInErrorResponse() throws Exception {
+        // Given: custom correlation ID
+        String customCorrelationId = "error-test-456";
+
+        // When: request non-existent item
+        mockMvc.perform(get("/catalog/items/99999")
+                        .header("X-Correlation-ID", customCorrelationId))
+                .andExpect(status().isNotFound())
+                .andExpect(header().string("X-Correlation-ID", customCorrelationId))
+                .andExpect(jsonPath("$.correlationId").value(customCorrelationId));
+    }
+
     // Helper methods
     private Item createTestItem(String name, String sku) {
         return createTestItem(name, sku, "General");
