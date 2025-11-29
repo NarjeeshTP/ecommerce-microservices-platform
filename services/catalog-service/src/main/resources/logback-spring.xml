@@ -39,6 +39,16 @@
 
     <!-- Reduce Spring Framework noise -->
     <logger name="org.springframework" level="INFO"/>
+
+    <!-- Hibernate SQL logging with correlation ID -->
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
     <logger name="org.hibernate" level="INFO"/>
 
 </configuration>

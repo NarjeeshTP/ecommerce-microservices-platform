@@ -28,6 +28,36 @@ A **Correlation ID** is a unique identifier (UUID) that tracks a single user req
 ONE Request = ONE Correlation ID = Track ENTIRE Journey
 ```
 
+### ⚠️ Important: Correlation ID is Created for EVERY Request
+
+**YES** - Every HTTP request that hits your service gets a correlation ID:
+
+1. **Auto-Generated (Default):** If client doesn't provide `X-Correlation-ID` header, a new UUID is generated
+2. **Client-Provided:** If client sends `X-Correlation-ID` header, that value is used
+
+**Examples:**
+```bash
+# Request 1 (no header) → Auto-generates: d1f35578-c6a9-4cb1-a7aa-ca4f9d1235b4
+curl http://localhost:8081/catalog/items
+
+# Request 2 (no header) → Auto-generates: 55ec4334-5e5a-419b-a93f-1823cb4c0a93
+curl http://localhost:8081/catalog/items
+
+# Request 3 (with header) → Uses: my-session-123
+curl -H "X-Correlation-ID: my-session-123" http://localhost:8081/catalog/items
+
+# Request 4 (same header) → Uses: my-session-123 (tracks multiple operations)
+curl -H "X-Correlation-ID: my-session-123" http://localhost:8081/catalog/items/1
+```
+
+**Result in Logs:**
+```
+[d1f35578-c6a9-4cb1-a7aa-ca4f9d1235b4] INFO - Request 1
+[55ec4334-5e5a-419b-a93f-1823cb4c0a93] INFO - Request 2
+[my-session-123] INFO - Request 3
+[my-session-123] INFO - Request 4 (same ID as Request 3!)
+```
+
 **Example:**
 ```
 User Request [correlation-id: abc-123]
@@ -379,6 +409,46 @@ curl http://localhost:8081/catalog/items/99999 | python3 -m json.tool
 - Check if MDC is being cleared prematurely
 - Verify thread-local context is preserved
 - Check for async operations (they need special handling)
+
+---
+
+### Issue: Hibernate SQL logs don't show correlation ID
+
+**This is NORMAL behavior!** ✅
+
+**What you see:**
+```
+Hibernate: select i1_0.id,i1_0.category... from item i1_0 where i1_0.id=?
+                                          ↑ No correlation ID shown
+```
+
+**Why:**
+Hibernate uses its own logging framework that doesn't automatically include MDC values in the log pattern.
+
+**Your application logs DO show correlation ID:**
+```
+2025-11-29 02:38:56.181 [d1f35578-c6a9-4cb1-a7aa-ca4f9d1235b4] INFO GlobalExceptionHandler...
+                         ↑ Correlation ID is here!
+```
+
+**Solution (Optional):**
+If you want Hibernate logs to also show correlation IDs, update `logback-spring.xml`:
+
+```xml
+<!-- Hibernate SQL logging with correlation ID -->
+<logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+</logger>
+```
+
+This will make Hibernate logs use the same pattern (with correlation ID) as your application logs.
+
+**Result after fix:**
+```
+2025-11-29 02:38:56.181 [d1f35578-c6a9-4cb1-a7aa-ca4f9d1235b4] DEBUG org.hibernate.SQL - select i1_0.id...
+                         ↑ Correlation ID now shown!
+```
 
 ---
 
