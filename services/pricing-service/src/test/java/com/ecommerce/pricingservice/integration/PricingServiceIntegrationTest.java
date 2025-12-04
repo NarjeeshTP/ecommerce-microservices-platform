@@ -4,6 +4,8 @@ import com.ecommerce.pricingservice.dto.PriceResponse;
 import com.ecommerce.pricingservice.dto.PricingRuleRequest;
 import com.ecommerce.pricingservice.dto.PricingRuleResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import redis.embedded.RedisServer;
 
 import java.math.BigDecimal;
 
@@ -28,20 +31,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 class PricingServiceIntegrationTest {
 
+    private static RedisServer redisServer;
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
             .withDatabaseName("pricing_test_db")
             .withUsername("test")
             .withPassword("test");
 
+    @BeforeAll
+    static void startRedis() throws Exception {
+        redisServer = new RedisServer(16379);
+        redisServer.start();
+    }
+
+    @AfterAll
+    static void stopRedis() {
+        if (redisServer != null) {
+            redisServer.stop();
+        }
+    }
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.cache.type", () -> "redis");
         registry.add("spring.data.redis.host", () -> "localhost");
-        registry.add("spring.data.redis.port", () -> "6379");
-        registry.add("spring.cache.type", () -> "none"); // Disable Redis for integration tests
+        registry.add("spring.data.redis.port", () -> "16379");
     }
 
     @Autowired

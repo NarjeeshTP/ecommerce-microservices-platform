@@ -120,10 +120,15 @@ public class PricingController {
 
         // Check if value is in cache before calling service
         boolean isFromCache = false;
-        Cache cache = cacheManager.getCache("prices");
-        if (cache != null) {
-            Cache.ValueWrapper wrapper = cache.get(itemId);
-            isFromCache = (wrapper != null);
+        try {
+            Cache cache = cacheManager.getCache("prices");
+            if (cache != null) {
+                Cache.ValueWrapper wrapper = cache.get(itemId);
+                isFromCache = (wrapper != null);
+            }
+        } catch (Exception e) {
+            // Cache might be disabled or unavailable - this is okay
+            log.debug("Cache check failed (cache might be disabled): {}", e.getMessage());
         }
 
         PriceResponse response = pricingService.getPriceForItem(itemId);
@@ -150,10 +155,15 @@ public class PricingController {
         // Check if value is in cache before calling service
         String cacheKey = itemId + "_" + quantity;
         boolean isFromCache = false;
-        Cache cache = cacheManager.getCache("prices");
-        if (cache != null) {
-            Cache.ValueWrapper wrapper = cache.get(cacheKey);
-            isFromCache = (wrapper != null);
+        try {
+            Cache cache = cacheManager.getCache("prices");
+            if (cache != null) {
+                Cache.ValueWrapper wrapper = cache.get(cacheKey);
+                isFromCache = (wrapper != null);
+            }
+        } catch (Exception e) {
+            // Cache might be disabled or unavailable - this is okay
+            log.debug("Cache check failed (cache might be disabled): {}", e.getMessage());
         }
 
         PriceResponse response = pricingService.getPriceForItemWithQuantity(itemId, quantity);
