@@ -132,7 +132,7 @@ cd services/catalog-service
 mvn surefire:test
 ```
 
-**Note**: 
+**Note**:
 - Integration tests use **Testcontainers** to spin up a PostgreSQL database automatically. No manual database setup is needed.
 - Unit tests use mocked dependencies and run very fast (~1 second).
 - Integration tests take longer (~10-15 seconds) as they start a real database container.

@@ -1,0 +1,23 @@
+# Local Development Profile Configuration
+# This profile is used when running the service locally (not in Docker)
+# Docker containers will use the default application.yml with port 8082
+
+server:
+  port: 8083  # Local development uses port 8083 to avoid conflicts with Docker
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5434/pricing_db
+    username: pricing_user
+    password: pricing_password
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    com.ecommerce.pricingservice: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+

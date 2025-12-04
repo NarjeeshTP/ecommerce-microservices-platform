@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: pricing-service-test
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  cache:
+    type: none  # Disable cache for tests
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    com.ecommerce.pricingservice: DEBUG
+    org.springframework.test: INFO
+

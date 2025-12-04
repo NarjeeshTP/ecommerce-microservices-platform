@@ -1,0 +1,7 @@
+apiVersion: v2
+name: pricing-service
+description: A Helm chart for Pricing Service
+type: application
+version: 0.1.0
+appVersion: "0.0.1"
+

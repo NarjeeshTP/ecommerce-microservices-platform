@@ -20,7 +20,6 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      # Listeners: one internal (for container-to-container) and one for host access
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
@@ -46,7 +45,7 @@ services:
     ports:
       - '8083:8081'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -71,8 +70,12 @@ services:
     image: redis:7-alpine
     ports:
       - '6379:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Phase 1 additional services (enabled for local dev)
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.8.1
     environment:
@@ -93,64 +96,125 @@ services:
       timeout: 5s
       retries: 5
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.41
+    ports:
+      - '5775:5775/udp'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '16686:16686'
+      - '14268:14268'
+      - '14250:14250'
+      - '9411:9411'
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   prometheus:
     image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
     ports:
       - '9090:9090'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:9090/-/ready || exit 1"]
+      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - '9093:9093'
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost:9093/-/ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   grafana:
-    image: grafana/grafana:9.0.0
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - '3000:3000'
+    environment:
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "http://localhost:3000"
+      GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  jaeger:
-    image: jaegertracing/all-in-one:1.41
-    ports:
-      - '16686:16686'
-      - '14268:14268'
-    healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:16686/api/traces || exit 1"]
+      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   keycloak:
     image: quay.io/keycloak/keycloak:21.0.1
+    container_name: keycloak
     command: start-dev
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/ecommerce
+      KC_DB_USERNAME: dev
+      KC_DB_PASSWORD: dev
     ports:
       - '8080:8080'
+    depends_on:
+      - postgres
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/auth/ || exit 1"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
       retries: 5
+      start_period: 60s
 
   catalog-postgres:
-    image: postgres:latest
+    image: postgres:15-alpine
     container_name: catalog-postgres
     environment:
       POSTGRES_USER: catalog_user
       POSTGRES_PASSWORD: catalog_password
       POSTGRES_DB: catalog_db
+    volumes:
+      - catalog-postgres-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog_user -d catalog_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   catalog-service:
     build:
@@ -166,42 +230,51 @@ services:
       SPRING_DATASOURCE_PASSWORD: catalog_password
       SPRING_PROFILES_ACTIVE: local
 
+  pricing-postgres:
+    image: postgres:15-alpine
+    container_name: pricing-postgres
+    environment:
+      POSTGRES_USER: pricing_user
+      POSTGRES_PASSWORD: pricing_password
+      POSTGRES_DB: pricing_db
+    volumes:
+      - pricing-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pricing_user -d pricing_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pricing-service:
+    build:
+      context: ../services/pricing-service
+    container_name: pricing-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - pricing-postgres
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://pricing-postgres:5432/pricing_db
+      SPRING_DATASOURCE_USERNAME: pricing_user
+      SPRING_DATASOURCE_PASSWORD: pricing_password
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: default
+
 volumes:
   postgres-data:
     driver: local
+  catalog-postgres-data:
+    driver: local
+  pricing-postgres-data:
+    driver: local
   es-data:
     driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
 
-# Phase 1 readiness notes:
-# This file provides the minimal dev stack used in Phase 1 (Kafka, Schema Registry, Postgres, Redis).
-# Uncomment or add additional services below if you need search or observability during Phase 1.
-# Example optional services (commented):
-#
-#  elasticsearch:
-#    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.1
-#    environment:
-#      - discovery.type=single-node
-#      - xpack.security.enabled=false
-#    ports:
-#      - '9200:9200'
-#
-#  prometheus:
-#    image: prom/prometheus:latest
-#    volumes:
-#      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-#    ports:
-#      - '9090:9090'
-#
-#  grafana:
-#    image: grafana/grafana:9.0.0
-#    ports:
-#      - '3000:3000'
-#
-#  jaeger:
-#    image: jaegertracing/all-in-one:1.41
-#    ports:
-#      - '16686:16686'
-#
-# Keep the main services (kafka, postgres, redis) as-is for Phase 1 local development.
-
-# Usage: `docker compose -f infra/docker-compose.yml up --build -d`
