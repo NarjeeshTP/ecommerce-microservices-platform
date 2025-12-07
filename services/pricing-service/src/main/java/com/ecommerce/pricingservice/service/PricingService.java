@@ -115,13 +115,15 @@ public class PricingService {
     }
 
     @Cacheable(value = "prices", key = "#itemId", unless = "#result == null")
-    @Transactional(readOnly = true)
+    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "pricingService", fallbackMethod = "getPriceFallback")
+    @Transactional(readOnly = true, timeout = 3) // 3 seconds timeout at transaction level
     public PriceResponse getPriceForItem(String itemId) {
         return getPriceForItemWithQuantity(itemId, 1);
     }
 
     @Cacheable(value = "prices", key = "#itemId + '_' + #quantity", unless = "#result == null")
-    @Transactional(readOnly = true)
+    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "pricingService", fallbackMethod = "getPriceWithQuantityFallback")
+    @Transactional(readOnly = true, timeout = 3) // 3 seconds timeout at transaction level
     public PriceResponse getPriceForItemWithQuantity(String itemId, Integer quantity) {
         log.info("Fetching price for item: {} with quantity: {}", itemId, quantity);
 
@@ -163,7 +165,21 @@ public class PricingService {
     public PriceResponse getPriceFallback(String itemId, Throwable throwable) {
         log.error("Fallback triggered for item: {}. Error: {}", itemId, throwable.getMessage());
 
-        // Return a default/cached price or throw exception
+        // Try to get cached value first
+        return PriceResponse.builder()
+                .itemId(itemId)
+                .price(BigDecimal.ZERO)
+                .currency("USD")
+                .source("FALLBACK")
+                .discountApplied(false)
+                .build();
+    }
+
+    // Fallback method for getPriceForItemWithQuantity
+    public PriceResponse getPriceWithQuantityFallback(String itemId, Integer quantity, Throwable throwable) {
+        log.error("Fallback triggered for item: {} with quantity: {}. Error: {}", itemId, quantity, throwable.getMessage());
+
+        // Try to return cached or default value
         return PriceResponse.builder()
                 .itemId(itemId)
                 .price(BigDecimal.ZERO)

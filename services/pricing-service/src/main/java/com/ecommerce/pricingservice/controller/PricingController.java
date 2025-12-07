@@ -128,8 +128,10 @@ public class PricingController {
 
         PriceResponse response = pricingService.getPriceForItem(itemId);
 
-        // Set source based on cache status
-        response.setSource(isFromCache ? "CACHE" : "DATABASE");
+        // Set source based on cache status (only if not already set by fallback)
+        if (response.getSource() == null) {
+            response.setSource(isFromCache ? "CACHE" : "DATABASE");
+        }
         log.info("Price source for '{}': {}", itemId, response.getSource());
 
         return ResponseEntity.ok(response);
@@ -158,8 +160,10 @@ public class PricingController {
 
         PriceResponse response = pricingService.getPriceForItemWithQuantity(itemId, quantity);
 
-        // Set source based on cache status
-        response.setSource(isFromCache ? "CACHE" : "DATABASE");
+        // Set source based on cache status (only if not already set by fallback)
+        if (response.getSource() == null) {
+            response.setSource(isFromCache ? "CACHE" : "DATABASE");
+        }
         log.info("Price source for '{}': {}", cacheKey, response.getSource());
 
         return ResponseEntity.ok(response);

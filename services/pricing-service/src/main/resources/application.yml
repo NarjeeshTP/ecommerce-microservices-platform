@@ -37,7 +37,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,caches
+        include: health,info,metrics,prometheus,caches,circuitbreakers,circuitbreakerevents
   endpoint:
     health:
       show-details: always
@@ -45,6 +45,9 @@ management:
     export:
       prometheus:
         enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
 
 springdoc:
   api-docs:
@@ -66,10 +69,12 @@ resilience4j:
         waitDurationInOpenState: 5s
         failureRateThreshold: 50
         eventConsumerBufferSize: 10
-  timelimiter:
-    instances:
-      pricingService:
-        timeoutDuration: 3s
+  # Note: timelimiter is not used because our methods are synchronous.
+  # Timeouts are handled by @Transactional(timeout=3) instead.
+  # timelimiter:
+  #   instances:
+  #     pricingService:
+  #       timeoutDuration: 3s
 
 logging:
   level:
