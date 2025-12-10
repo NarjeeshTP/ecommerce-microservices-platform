@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: cart-service-test
+
+  datasource:
+    url: jdbc:tc:postgresql:15:///cartdb
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  flyway:
+    enabled: true
+
+# Test service URLs (will be overridden by WireMock)
+services:
+  catalog:
+    url: http://localhost:8080
+    timeout: 5000
+  pricing:
+    url: http://localhost:8081
+    timeout: 3000
+
+cart:
+  max-items-per-cart: 10
+
+logging:
+  level:
+    com.ecommerce.cart: DEBUG
+

@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: cart-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cartdb}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8083}
+  servlet:
+    context-path: /
+
+# Service URLs for inter-service communication
+services:
+  catalog:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8080}
+    timeout: 5000  # 5 seconds
+  pricing:
+    url: ${PRICING_SERVICE_URL:http://localhost:8081/api/v1}
+    timeout: 3000  # 3 seconds
+
+# WebClient Configuration
+webclient:
+  max-connections: 100
+  pending-acquire-timeout: 45000
+  max-idle-time: 20000
+
+# Cart Configuration
+cart:
+  session-ttl-days: 30  # Clean up carts older than 30 days
+  max-items-per-cart: 50
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.ecommerce.cart: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n"
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
