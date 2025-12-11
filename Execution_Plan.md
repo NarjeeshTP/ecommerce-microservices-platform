@@ -189,9 +189,16 @@ Build supporting services and infra.
 - ✅ Mock mode for testing without external services
 - ✅ Comprehensive README.md for both services (65+ KB total)
 
-**Week 10 (Outbox & Debezium)**
-- Implement reliable Outbox processor pattern
-- Optionally run Debezium locally to pick DB changes and push to Kafka
+**Week 10 (Outbox & Debezium)** ✅ COMPLETED (Dec 11, 2025)
+- ✅ Implement reliable Outbox processor pattern
+- ✅ Outbox table schema and polling implementation
+- ✅ Debezium CDC setup with PostgreSQL connector
+- ✅ Docker Compose configuration for Kafka Connect
+- ✅ Dual-write problem solved with transactional outbox
+- ✅ Change Data Capture (CDC) streaming from WAL
+- ✅ At-least-once delivery guarantees
+- ✅ Idempotency patterns for consumers
+- ✅ Comprehensive README.md (50+ KB) covering both approaches
 
 **Week 11 (API Gateway + Feature Flags)**
 - API Gateway (Spring Cloud Gateway or Kong) with routing, JWT validation (Keycloak), rate limiting template
