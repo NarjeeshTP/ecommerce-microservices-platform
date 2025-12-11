@@ -179,9 +179,15 @@ Implement Pricing, Cart, Order, Payment, Inventory. These are the backbone.
 # Phase 4 — Platform Services (Week 9–12)
 Build supporting services and infra.
 
-**Week 9 (Notification + Search)**
-- Notification service consumes OrderConfirmed and PaymentCompleted events; mock email/SMS
-- Search service: index Catalog into Elasticsearch and provide search endpoint
+**Week 9 (Notification + Search)** ✅ COMPLETED (Dec 11, 2025)
+- ✅ Notification service consumes OrderConfirmed and PaymentCompleted events; mock email/SMS
+- ✅ Search service: index Catalog into Elasticsearch and provide search endpoint
+- ✅ Email notifications with Thymeleaf templates
+- ✅ Full-text search with Elasticsearch
+- ✅ Autocomplete and faceted search
+- ✅ Event-driven architecture (Kafka consumers)
+- ✅ Mock mode for testing without external services
+- ✅ Comprehensive README.md for both services (65+ KB total)
 
 **Week 10 (Outbox & Debezium)**
 - Implement reliable Outbox processor pattern

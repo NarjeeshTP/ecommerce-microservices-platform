@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: search-service
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+    connection-timeout: 5s
+    socket-timeout: 30s
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: search-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+server:
+  port: ${SERVER_PORT:8088}
+
+# Catalog Service URL
+catalog:
+  service:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8080}
+    timeout: 5000
+
+# Kafka Topics
+kafka:
+  topics:
+    catalog-events: catalog-events
+
+# Search Configuration
+search:
+  index:
+    name: products
+    shards: 1
+    replicas: 0
+
+  sync:
+    enabled: true
+    on-startup: true  # Sync all products on startup
+    batch-size: 100
+
+  query:
+    default-size: 20
+    max-size: 100
+    min-score: 0.5  # Minimum relevance score
+
+  suggestions:
+    enabled: true
+    max-suggestions: 5
+
+# OpenAPI Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    com.ecommerce.search: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.data.elasticsearch: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n"
+
