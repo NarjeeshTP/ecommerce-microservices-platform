@@ -214,10 +214,16 @@ Build supporting services and infra.
 - ✅ Audit history for flag changes
 - ✅ Comprehensive README.md for both services (40+ KB total)
 
-**Week 12 (Chaos + Observability)**
-- Chaos service to inject latency/failures
-- Instrument services with OpenTelemetry
-- Prometheus metrics, Grafana dashboards, Jaeger traces
+**Week 12 (Chaos + Observability)** ✅ COMPLETED (Dec 11, 2025)
+- ✅ Chaos Service for fault injection (latency, errors, kill)
+- ✅ OpenTelemetry instrumentation across all services
+- ✅ Prometheus metrics collection (12 services)
+- ✅ Grafana dashboards provisioning
+- ✅ Jaeger distributed tracing setup
+- ✅ Alert rules configuration (health, latency, errors)
+- ✅ Service health monitoring
+- ✅ Distributed trace correlation
+- ✅ Comprehensive README.md (35+ KB)
 
 **Deliverables**
 - Platform services running locally

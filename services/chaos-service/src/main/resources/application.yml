@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: chaos-service
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+server:
+  port: ${SERVER_PORT:8092}
+chaos:
+  enabled: true
+  scenarios:
+    latency:
+      enabled: true
+      default-delay-ms: 1000
+      max-delay-ms: 10000
+    error:
+      enabled: true
+      default-error-rate: 0.1
+      error-types:
+        - HTTP_500
+        - HTTP_503
+        - TIMEOUT
+        - EXCEPTION
+    kill:
+      enabled: true
+      kill-probability: 0.01
+  targets:
+    - service: catalog-service
+      endpoints:
+        - /api/products/**
+      scenarios: [latency, error]
+    - service: order-service
+      endpoints:
+        - /api/orders/**
+      scenarios: [latency, error, kill]
+    - service: payment-service
+      endpoints:
+        - /api/payments/**
+      scenarios: [latency, error]
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,chaos
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+logging:
+  level:
+    com.ecommerce.chaos: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{traceId},%X{spanId}] - %msg%n"
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
