@@ -1,0 +1,161 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Catalog Service
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/catalog/**, /api/products/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+            - StripPrefix=0
+        # Pricing Service
+        - id: pricing-service
+          uri: ${PRICING_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/pricing/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+            - StripPrefix=0
+        # Cart Service
+        - id: cart-service
+          uri: ${CART_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/cart/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+            - StripPrefix=0
+        # Order Service
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+            - StripPrefix=0
+        # Payment Service
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+            - StripPrefix=0
+        # Inventory Service
+        - id: inventory-service
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+            - StripPrefix=0
+        # Search Service
+        - id: search-service
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8088}
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+            - StripPrefix=0
+        # Feature Flags Service
+        - id: feature-flags-service
+          uri: ${FEATURE_FLAGS_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Path=/api/features/**
+          filters:
+            - StripPrefix=0
+      default-filters:
+        - name: Retry
+          args:
+            retries: 3
+            statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            backoff:
+              firstBackoff: 100ms
+              maxBackoff: 500ms
+              factor: 2
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            exposedHeaders:
+              - Authorization
+            maxAge: 3600
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/myrealm}
+          jwk-set-uri: ${KEYCLOAK_JWK_URI:http://localhost:8180/realms/myrealm/protocol/openid-connect/certs}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+server:
+  port: ${SERVER_PORT:8090}
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    com.ecommerce.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n"
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+# Gateway Configuration
+gateway:
+  rate-limit:
+    enabled: true
+    default-replenish-rate: 50
+    default-burst-capacity: 100
+  jwt:
+    validation:
+      enabled: true
+      public-paths:
+        - /api/catalog/**
+        - /api/products/**
+        - /api/search/**
+        - /actuator/**

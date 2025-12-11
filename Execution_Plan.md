@@ -200,9 +200,19 @@ Build supporting services and infra.
 - ✅ Idempotency patterns for consumers
 - ✅ Comprehensive README.md (50+ KB) covering both approaches
 
-**Week 11 (API Gateway + Feature Flags)**
-- API Gateway (Spring Cloud Gateway or Kong) with routing, JWT validation (Keycloak), rate limiting template
-- Feature Flag service (simple toggle store + SDK client)
+**Week 11 (API Gateway + Feature Flags)** ✅ COMPLETED (Dec 11, 2025)
+- ✅ API Gateway with Spring Cloud Gateway
+- ✅ Service routing to 8 backend services
+- ✅ JWT validation via Keycloak OAuth2
+- ✅ Redis-based rate limiting (token bucket algorithm)
+- ✅ CORS configuration for cross-origin requests
+- ✅ Retry logic with exponential backoff
+- ✅ Feature Flag service with PostgreSQL + Redis
+- ✅ Simple boolean toggles and percentage rollouts
+- ✅ User targeting and rule-based evaluation
+- ✅ SDK client for service integration
+- ✅ Audit history for flag changes
+- ✅ Comprehensive README.md for both services (40+ KB total)
 
 **Week 12 (Chaos + Observability)**
 - Chaos service to inject latency/failures
