@@ -248,9 +248,17 @@ Kubernetes, Helm, CI/CD, SRE practices.
 - ✅ Metrics Server for autoscaling
 - ✅ Comprehensive README.md (40+ KB)
 
-**Week 14 (Service Mesh & Resilience)**
-- Optional: install Istio or Linkerd in local Kind
-- Configure CB, retries, timeouts at mesh or client level
+**Week 14 (Service Mesh & Resilience)** ✅ COMPLETED (Dec 12, 2025)
+- ✅ Istio service mesh installation on Kind cluster
+- ✅ Automatic sidecar injection (Envoy proxy)
+- ✅ Circuit breaker policies (Order, Payment, Catalog services)
+- ✅ Retry policies with exponential backoff (4 services)
+- ✅ Timeout policies (all services)
+- ✅ Connection pooling and outlier detection
+- ✅ Traffic management and load balancing
+- ✅ Observability integration (Kiali, Grafana, Jaeger)
+- ✅ Resilience testing procedures
+- ✅ Comprehensive README.md (45+ KB)
 
 **Week 15 (CI/CD & Terraform)**
 - GitHub Actions per-service workflows
