@@ -17,7 +17,7 @@ groups:
         annotations:
           summary: "Critical availability SLO burn rate detected"
           description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%), burning through error budget rapidly. Current error budget remaining: check dashboard."
-          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/availability-slo.md"
+          runbook: "https://github.com/yourorg/platform/blob/main/deployment/slo-alerts/runbooks/availability-slo.md"
       - alert: SLOAvailabilityBudgetBurnRateWarning
         expr: |
           (
@@ -48,7 +48,7 @@ groups:
         annotations:
           summary: "P95 latency SLO breached for {{ $labels.job }}"
           description: "P95 latency is {{ $value }}s (threshold: 0.5s). {{ $labels.job }} is responding slowly."
-          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/latency-slo.md"
+          runbook: "https://github.com/yourorg/platform/blob/main/deployment/slo-alerts/runbooks/latency-slo.md"
       # Latency SLO: 99% of requests < 2s
       - alert: SLOLatencyP99Breached
         expr: |
@@ -134,7 +134,7 @@ groups:
         annotations:
           summary: "Checkout failure rate exceeds SLO"
           description: "Order creation failing at {{ $value | humanizePercentage }} (threshold: 1%). Revenue impact!"
-          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/checkout-failure.md"
+          runbook: "https://github.com/yourorg/platform/blob/main/deployment/slo-alerts/runbooks/checkout-failure.md"
       - alert: CheckoutJourneyLatencyHigh
         expr: |
           histogram_quantile(0.95,
@@ -162,7 +162,7 @@ groups:
         annotations:
           summary: "Payment failure rate exceeds SLO"
           description: "Payment service failing at {{ $value | humanizePercentage }} (threshold: 0.5%). Check payment gateway."
-          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/payment-failure.md"
+          runbook: "https://github.com/yourorg/platform/blob/main/deployment/slo-alerts/runbooks/payment-failure.md"
   - name: dependency_slo
     interval: 1m
     rules:
@@ -187,7 +187,7 @@ groups:
         annotations:
           summary: "Database connection timeouts detected"
           description: "{{ $value }} timeouts/sec. Database overloaded or slow queries."
-          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/database-slow.md"
+          runbook: "https://github.com/yourorg/platform/blob/main/deployment/slo-alerts/runbooks/database-slow.md"
       # Kafka SLO
       - alert: KafkaConsumerLag
         expr: |

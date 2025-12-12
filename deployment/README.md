@@ -25,6 +25,12 @@ deployment/
 │       ├── scripts/
 │       └── resilience-policies/
 │
+├── slo-alerts/              # SLO monitoring and alerting
+│   ├── prometheus/          # Prometheus alert rules
+│   ├── grafana/             # Grafana dashboards
+│   ├── runbooks/            # Incident response runbooks
+│   └── chaos-experiments/   # Chaos testing scripts
+│
 ├── docker/                  # Docker-related files
 │   ├── docker-compose.yml   # Local development compose
 │   └── Dockerfiles/         # Service-specific Dockerfiles
@@ -86,6 +92,9 @@ terraform apply -var-file=terraform.tfvars
 ### Kubernetes
 - [Kubernetes Setup](k8s/README.md) - Kind/Minikube setup and K8s resources
 - [Service Mesh](k8s/service-mesh/README.md) - Istio installation and resilience policies
+
+### SLO Monitoring & Alerting
+- [SLO & Alerts Guide](slo-alerts/README.md) - SLO definitions, Prometheus alerts, incident runbooks
 
 ### Terraform
 - [Infrastructure Guide](terraform/README.md) - Terraform modules and environment setup (if exists)
@@ -161,6 +170,7 @@ All deployment targets include:
 - **Tracing:** Jaeger
 - **Logging:** EFK/ELK stack
 - **Alerting:** Alertmanager + PagerDuty/Slack
+- **SLO Monitoring:** Error budget tracking, burn rate alerts (see `slo-alerts/`)
 
 ## 🧪 Testing Deployment
 
@@ -256,6 +266,7 @@ kubectl logs <pod-name> -n platform-core -c istio-proxy
 - Kubernetes issues: See [k8s/README.md](k8s/README.md)
 - Helm issues: See [helm/README.md](helm/README.md)
 - Terraform issues: See [terraform/README.md](terraform/README.md)
+- SLO & Alerting: See [slo-alerts/README.md](slo-alerts/README.md)
 - CI/CD issues: See [../.github/README.md](../.github/README.md)
 
 ---
