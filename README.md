@@ -2,7 +2,7 @@
 
 A complete, production-grade, cloud-native backend built for mastering Java, Spring Boot, microservices, and distributed systems.
 
-This repository contains a full-scale e-commerce backend platform made up of 26+ microservices, designed to emulate real-world enterprise architecture used by modern digital teams.
+This repository contains a full-scale e-commerce backend platform made up of 20+ microservices, designed to emulate real-world enterprise architecture used by modern digital teams.
 
 The purpose of this platform is to help you gain mastery in:
 

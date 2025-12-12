@@ -150,7 +150,7 @@ Smoke Tests
 Production Deployment (manual approval)
 ```
 
-See [CI/CD Guide](../.github/README.md) for detailed pipeline documentation.
+See [CI/CD Guide](../.github/CI-CD.md) for detailed pipeline documentation.
 
 ## 🔐 Secrets Management
 
@@ -267,7 +267,7 @@ kubectl logs <pod-name> -n platform-core -c istio-proxy
 - Helm issues: See [helm/README.md](helm/README.md)
 - Terraform issues: See [terraform/README.md](terraform/README.md)
 - SLO & Alerting: See [slo-alerts/README.md](slo-alerts/README.md)
-- CI/CD issues: See [../.github/README.md](../.github/README.md)
+- CI/CD issues: See [../.github/CI-CD.md](../.github/CI-CD.md)
 
 ---
 
