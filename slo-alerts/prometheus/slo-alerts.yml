@@ -1,0 +1,283 @@
+groups:
+  - name: slo_availability
+    interval: 30s
+    rules:
+      # Availability SLO: 99.9% (43.2 minutes downtime/month)
+      - alert: SLOAvailabilityBudgetBurnRateCritical
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5..", job=~".*-service"}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job=~".*-service"}[5m]))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          slo: availability
+        annotations:
+          summary: "Critical availability SLO burn rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%), burning through error budget rapidly. Current error budget remaining: check dashboard."
+          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/availability-slo.md"
+      - alert: SLOAvailabilityBudgetBurnRateWarning
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5..", job=~".*-service"}[30m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job=~".*-service"}[30m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          slo: availability
+        annotations:
+          summary: "Elevated availability SLO burn rate"
+          description: "Error rate is {{ $value | humanizePercentage }} over 30 minutes (threshold: 1%). Monitor for trend."
+  - name: slo_latency
+    interval: 30s
+    rules:
+      # Latency SLO: 95% of requests < 500ms
+      - alert: SLOLatencyP95Breached
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{job=~".*-service"}[5m])) by (le, job)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          slo: latency
+        annotations:
+          summary: "P95 latency SLO breached for {{ $labels.job }}"
+          description: "P95 latency is {{ $value }}s (threshold: 0.5s). {{ $labels.job }} is responding slowly."
+          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/latency-slo.md"
+      # Latency SLO: 99% of requests < 2s
+      - alert: SLOLatencyP99Breached
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_server_requests_seconds_bucket{job=~".*-service"}[5m])) by (le, job)
+          ) > 2
+        for: 3m
+        labels:
+          severity: critical
+          slo: latency
+        annotations:
+          summary: "P99 latency SLO critically breached for {{ $labels.job }}"
+          description: "P99 latency is {{ $value }}s (threshold: 2s). Immediate investigation required."
+  - name: slo_error_budget
+    interval: 5m
+    rules:
+      # Error Budget Burn Rate Alerts (multi-window)
+      # Fast burn: 2% error rate for 5 minutes = 1% of monthly budget
+      - alert: SLOErrorBudgetBurnFast
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5..", job=~".*-service"}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job=~".*-service"}[5m]))
+          ) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+          slo: error_budget
+          burn_rate: fast
+        annotations:
+          summary: "Fast error budget burn detected"
+          description: "Burning through monthly error budget at {{ $value | humanizePercentage }} error rate. At this rate, budget exhausted in hours."
+          action: "Page on-call engineer immediately"
+      # Slow burn: 0.5% error rate for 1 hour = ~10% of monthly budget
+      - alert: SLOErrorBudgetBurnSlow
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5..", job=~".*-service"}[1h]))
+            /
+            sum(rate(http_server_requests_seconds_count{job=~".*-service"}[1h]))
+          ) > 0.005
+        for: 30m
+        labels:
+          severity: warning
+          slo: error_budget
+          burn_rate: slow
+        annotations:
+          summary: "Slow error budget burn detected"
+          description: "Sustained error rate of {{ $value | humanizePercentage }} over 1 hour. Budget depleting steadily."
+          action: "Investigate root cause during business hours"
+      # Error Budget Exhaustion Warning
+      - alert: SLOErrorBudgetLow
+        expr: |
+          (
+            1 - (
+              sum(rate(http_server_requests_seconds_count{status=~"5..", job=~".*-service"}[30d]))
+              /
+              sum(rate(http_server_requests_seconds_count{job=~".*-service"}[30d]))
+            ) / 0.999
+          ) < 0.1
+        labels:
+          severity: warning
+          slo: error_budget
+        annotations:
+          summary: "Error budget below 10%"
+          description: "Only {{ $value | humanizePercentage }} of monthly error budget remains. Freeze non-critical changes."
+  - name: critical_user_journey
+    interval: 30s
+    rules:
+      # Order Checkout Journey SLO
+      - alert: CheckoutJourneyFailureRateHigh
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{uri="/api/orders", status=~"5.."}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count{uri="/api/orders"}[5m]))
+          ) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+          journey: checkout
+        annotations:
+          summary: "Checkout failure rate exceeds SLO"
+          description: "Order creation failing at {{ $value | humanizePercentage }} (threshold: 1%). Revenue impact!"
+          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/checkout-failure.md"
+      - alert: CheckoutJourneyLatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{uri="/api/orders"}[5m])) by (le)
+          ) > 3
+        for: 3m
+        labels:
+          severity: warning
+          journey: checkout
+        annotations:
+          summary: "Checkout latency degraded"
+          description: "P95 checkout time is {{ $value }}s (threshold: 3s). User experience impacted."
+      # Payment Processing SLO
+      - alert: PaymentProcessingFailureHigh
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{job="payment-service", status=~"5.."}[10m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job="payment-service"}[10m]))
+          ) > 0.005
+        for: 5m
+        labels:
+          severity: critical
+          journey: payment
+        annotations:
+          summary: "Payment failure rate exceeds SLO"
+          description: "Payment service failing at {{ $value | humanizePercentage }} (threshold: 0.5%). Check payment gateway."
+          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/payment-failure.md"
+  - name: dependency_slo
+    interval: 1m
+    rules:
+      # Database SLO
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          hikaricp_connections_active / hikaricp_connections_max > 0.9
+        for: 2m
+        labels:
+          severity: warning
+          dependency: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Connection pool {{ $value | humanizePercentage }} full. May cause request queuing."
+      - alert: DatabaseSlowQueries
+        expr: |
+          rate(hikaricp_connections_timeout_total[5m]) > 0.01
+        for: 3m
+        labels:
+          severity: critical
+          dependency: database
+        annotations:
+          summary: "Database connection timeouts detected"
+          description: "{{ $value }} timeouts/sec. Database overloaded or slow queries."
+          runbook: "https://github.com/yourorg/platform/blob/main/slo-alerts/runbooks/database-slow.md"
+      # Kafka SLO
+      - alert: KafkaConsumerLag
+        expr: |
+          kafka_consumergroup_lag > 10000
+        for: 10m
+        labels:
+          severity: warning
+          dependency: kafka
+        annotations:
+          summary: "Kafka consumer lag high"
+          description: "Consumer group {{ $labels.consumergroup }} has {{ $value }} messages lagging. Processing delayed."
+      # Redis Cache Hit Rate SLO
+      - alert: RedisCacheHitRateLow
+        expr: |
+          (
+            sum(rate(redis_keyspace_hits_total[5m]))
+            /
+            (sum(rate(redis_keyspace_hits_total[5m])) + sum(rate(redis_keyspace_misses_total[5m])))
+          ) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          dependency: redis
+        annotations:
+          summary: "Redis cache hit rate below threshold"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 80%). May increase database load."
+  - name: business_metrics_slo
+    interval: 1m
+    rules:
+      # Revenue SLO
+      - alert: OrderCreationRateDropped
+        expr: |
+          (
+            sum(rate(orders_created_total[10m]))
+            /
+            sum(rate(orders_created_total[10m] offset 1d))
+          ) < 0.5
+        for: 5m
+        labels:
+          severity: critical
+          business: revenue
+        annotations:
+          summary: "Order creation rate dropped 50%"
+          description: "Current: {{ $value | humanize }} orders/sec vs yesterday. Potential outage or traffic drop."
+          action: "Check traffic sources, payment gateway, and critical services"
+      - alert: CartAbandonmentRateHigh
+        expr: |
+          (
+            sum(rate(carts_created_total[1h])) - sum(rate(orders_created_total[1h]))
+          ) / sum(rate(carts_created_total[1h])) > 0.8
+        for: 30m
+        labels:
+          severity: warning
+          business: conversion
+        annotations:
+          summary: "Cart abandonment rate elevated"
+          description: "{{ $value | humanizePercentage }} of carts not converting to orders. Check checkout UX."
+  - name: saturation
+    interval: 1m
+    rules:
+      # CPU Saturation
+      - alert: CPUSaturationHigh
+        expr: |
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          resource: cpu
+        annotations:
+          summary: "CPU saturation high on {{ $labels.instance }}"
+          description: "CPU usage {{ $value }}% (threshold: 80%). May impact performance."
+      # Memory Saturation
+      - alert: MemorySaturationHigh
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 3m
+        labels:
+          severity: critical
+          resource: memory
+        annotations:
+          summary: "Memory saturation critical on {{ $labels.instance }}"
+          description: "Memory usage {{ $value }}% (threshold: 85%). Risk of OOM kills."
+      # Disk Saturation
+      - alert: DiskSaturationHigh
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          resource: disk
+        annotations:
+          summary: "Disk space low on {{ $labels.instance }}"
+          description: "Only {{ $value }}% free (threshold: 15%). Cleanup required."

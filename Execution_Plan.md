@@ -274,10 +274,20 @@ Kubernetes, Helm, CI/CD, SRE practices.
 - ✅ Terraform infrastructure scaffolding (VPC, EKS, RDS modules)
 - ✅ Comprehensive README.md (40+ KB)
 
-**Week 16 (SLOs & Alerts)**
-- Prometheus alert rules and SLO dashboards
-- Create incident runbooks for key flows
-- Run a chaos experiment and validate rollback
+**Week 16 (SLOs & Alerts)** ✅ COMPLETED (Dec 12, 2025)
+- ✅ SLO definitions (availability: 99.9%, latency: P95<500ms, P99<2s)
+- ✅ Prometheus alert rules (25+ alerts across 7 categories)
+- ✅ Error budget tracking (fast/slow burn rate alerts)
+- ✅ Multi-window burn rate alerts (5m, 30m, 1h, 30d)
+- ✅ Critical user journey SLOs (checkout, payment, search)
+- ✅ Dependency SLOs (database, Kafka, Redis)
+- ✅ Business metrics alerts (revenue, conversion rate)
+- ✅ Saturation monitoring (CPU, memory, disk)
+- ✅ Incident runbooks (availability, checkout, latency, database)
+- ✅ Grafana SLO dashboards (overview, error budget tracking)
+- ✅ Chaos experiments (4 scenarios with automated validation)
+- ✅ Rollback procedures (Helm, Kubernetes, canary)
+- ✅ Comprehensive README.md (50+ KB)
 
 **Deliverables**
 - K8s deployment scripts
