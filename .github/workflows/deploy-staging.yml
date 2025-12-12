@@ -5,7 +5,7 @@ on:
       - develop
     paths:
       - 'services/**'
-      - 'helm/**'
+      - 'deployment/helm/**'
   workflow_dispatch:
     inputs:
       service:
@@ -43,7 +43,7 @@ jobs:
       - name: Deploy Catalog Service
         if: contains(github.event.head_commit.modified, 'services/catalog-service') || github.event.inputs.service == 'catalog-service' || github.event.inputs.service == 'all'
         run: |
-          helm upgrade --install catalog-service ./helm/charts/catalog-service \
+          helm upgrade --install catalog-service ./deployment/helm/charts/catalog-service \
             --namespace ${{ env.NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/catalog-service \
             --set image.tag=${{ github.sha }} \
@@ -52,7 +52,7 @@ jobs:
       - name: Deploy Pricing Service
         if: contains(github.event.head_commit.modified, 'services/pricing-service') || github.event.inputs.service == 'pricing-service' || github.event.inputs.service == 'all'
         run: |
-          helm upgrade --install pricing-service ./helm/charts/pricing-service \
+          helm upgrade --install pricing-service ./deployment/helm/charts/pricing-service \
             --namespace ${{ env.NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/pricing-service \
             --set image.tag=${{ github.sha }} \
@@ -60,7 +60,7 @@ jobs:
       - name: Deploy Cart Service
         if: contains(github.event.head_commit.modified, 'services/cart-service') || github.event.inputs.service == 'cart-service' || github.event.inputs.service == 'all'
         run: |
-          helm upgrade --install cart-service ./helm/charts/cart-service \
+          helm upgrade --install cart-service ./deployment/helm/charts/cart-service \
             --namespace ${{ env.NAMESPACE }} \
             --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/cart-service \
             --set image.tag=${{ github.sha }} \

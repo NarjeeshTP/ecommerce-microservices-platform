@@ -68,7 +68,7 @@ watch kubectl get pods -n platform-core
 ### Option 3: Enable Circuit Breaker
 ```bash
 # Apply circuit breaker policy
-kubectl apply -f k8s/service-mesh/resilience-policies/circuit-breaker.yaml
+kubectl apply -f deployment/k8s/service-mesh/resilience-policies/circuit-breaker.yaml
 # Verify in Kiali
 istioctl dashboard kiali
 # Navigate to Graph → Check for circuit breaker icon

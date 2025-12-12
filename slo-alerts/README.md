@@ -392,7 +392,7 @@ helm rollback order-service -n platform-core
 kubectl scale deployment/order-service --replicas=5 -n platform-core
 
 # Option 3: Enable circuit breaker manually
-kubectl apply -f k8s/service-mesh/resilience-policies/circuit-breaker.yaml
+kubectl apply -f deployment/k8s/service-mesh/resilience-policies/circuit-breaker.yaml
 ```
 
 **Verification:**

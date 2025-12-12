@@ -162,14 +162,14 @@ export PATH=$PWD/bin:$PATH
 istioctl version
 
 # Kubernetes cluster
-./k8s/scripts/setup-kind.sh  # Must be running
+./deployment/k8s/scripts/setup-kind.sh  # Must be running
 ```
 
 ### Install Istio
 
 ```bash
 # Run installation script
-./k8s/service-mesh/scripts/install-istio.sh
+./deployment/k8s/service-mesh/scripts/install-istio.sh
 
 # What it does:
 # 1. Installs Istio control plane (istiod)
@@ -254,7 +254,7 @@ kubectl apply -f <(istioctl kube-inject -f pod.yaml)
 
 ### Configuration
 
-**File:** `k8s/service-mesh/resilience-policies/circuit-breaker.yaml`
+**File:** `deployment/k8s/service-mesh/resilience-policies/circuit-breaker.yaml`
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -302,7 +302,7 @@ spec:
 
 ```bash
 # Apply to all services
-kubectl apply -f k8s/service-mesh/resilience-policies/circuit-breaker.yaml
+kubectl apply -f deployment/k8s/service-mesh/resilience-policies/circuit-breaker.yaml
 
 # Verify
 kubectl get destinationrules -n platform-core
@@ -345,7 +345,7 @@ done
 
 ### Configuration
 
-**File:** `k8s/service-mesh/resilience-policies/retry-timeout.yaml`
+**File:** `deployment/k8s/service-mesh/resilience-policies/retry-timeout.yaml`
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -405,7 +405,7 @@ Attempt 4: After 100ms
 
 ```bash
 # Apply to all services
-kubectl apply -f k8s/service-mesh/resilience-policies/retry-timeout.yaml
+kubectl apply -f deployment/k8s/service-mesh/resilience-policies/retry-timeout.yaml
 
 # Verify
 kubectl get virtualservices -n platform-core
@@ -474,7 +474,7 @@ Request sent at T=0
 
 ```bash
 # Already included in retry-timeout.yaml
-kubectl apply -f k8s/service-mesh/resilience-policies/retry-timeout.yaml
+kubectl apply -f deployment/k8s/service-mesh/resilience-policies/retry-timeout.yaml
 
 # Test with latency injection
 curl -X POST http://localhost:8092/api/chaos/latency \

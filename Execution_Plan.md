@@ -179,7 +179,7 @@ Implement Pricing, Cart, Order, Payment, Inventory. These are the backbone.
 # Phase 4 — Platform Services (Week 9–12)
 Build supporting services and infra.
 
-**Week 9 (Notification + Search)** ✅ COMPLETED (Dec 11, 2025)
+**Week 9 (Notification + Search)**  
 - ✅ Notification service consumes OrderConfirmed and PaymentCompleted events; mock email/SMS
 - ✅ Search service: index Catalog into Elasticsearch and provide search endpoint
 - ✅ Email notifications with Thymeleaf templates
@@ -189,7 +189,7 @@ Build supporting services and infra.
 - ✅ Mock mode for testing without external services
 - ✅ Comprehensive README.md for both services (65+ KB total)
 
-**Week 10 (Outbox & Debezium)** ✅ COMPLETED (Dec 11, 2025)
+**Week 10 (Outbox & Debezium)**  
 - ✅ Implement reliable Outbox processor pattern
 - ✅ Outbox table schema and polling implementation
 - ✅ Debezium CDC setup with PostgreSQL connector
@@ -200,7 +200,7 @@ Build supporting services and infra.
 - ✅ Idempotency patterns for consumers
 - ✅ Comprehensive README.md (50+ KB) covering both approaches
 
-**Week 11 (API Gateway + Feature Flags)** ✅ COMPLETED (Dec 11, 2025)
+**Week 11 (API Gateway + Feature Flags)**  
 - ✅ API Gateway with Spring Cloud Gateway
 - ✅ Service routing to 8 backend services
 - ✅ JWT validation via Keycloak OAuth2
@@ -214,7 +214,7 @@ Build supporting services and infra.
 - ✅ Audit history for flag changes
 - ✅ Comprehensive README.md for both services (40+ KB total)
 
-**Week 12 (Chaos + Observability)** ✅ COMPLETED (Dec 11, 2025)
+**Week 12 (Chaos + Observability)**  
 - ✅ Chaos Service for fault injection (latency, errors, kill)
 - ✅ OpenTelemetry instrumentation across all services
 - ✅ Prometheus metrics collection (12 services)
@@ -234,7 +234,7 @@ Build supporting services and infra.
 # Phase 5 — Production Readiness & Orchestration (Week 13–16)
 Kubernetes, Helm, CI/CD, SRE practices.
 
-**Week 13 (Kubernetes)** ✅ COMPLETED (Dec 11, 2025)
+**Week 13 (Kubernetes)**  
 - ✅ Namespace definitions (platform-system, platform-core, platform-infra)
 - ✅ Kind cluster configuration (3 nodes, ingress port mapping)
 - ✅ Minikube setup script with addons
@@ -248,7 +248,7 @@ Kubernetes, Helm, CI/CD, SRE practices.
 - ✅ Metrics Server for autoscaling
 - ✅ Comprehensive README.md (40+ KB)
 
-**Week 14 (Service Mesh & Resilience)** ✅ COMPLETED (Dec 12, 2025)
+**Week 14 (Service Mesh & Resilience)**   
 - ✅ Istio service mesh installation on Kind cluster
 - ✅ Automatic sidecar injection (Envoy proxy)
 - ✅ Circuit breaker policies (Order, Payment, Catalog services)
@@ -260,7 +260,7 @@ Kubernetes, Helm, CI/CD, SRE practices.
 - ✅ Resilience testing procedures
 - ✅ Comprehensive README.md (45+ KB)
 
-**Week 15 (CI/CD & Terraform)** ✅ COMPLETED (Dec 12, 2025)
+**Week 15 (CI/CD & Terraform)**   
 - ✅ GitHub Actions workflows (ci-build.yml, docker-publish.yml, deploy-staging.yml)
 - ✅ Path filtering for build-on-change (dorny/paths-filter action)
 - ✅ Docker build and publish to GitHub Container Registry (GHCR)
@@ -274,7 +274,7 @@ Kubernetes, Helm, CI/CD, SRE practices.
 - ✅ Terraform infrastructure scaffolding (VPC, EKS, RDS modules)
 - ✅ Comprehensive README.md (40+ KB)
 
-**Week 16 (SLOs & Alerts)** ✅ COMPLETED (Dec 12, 2025)
+**Week 16 (SLOs & Alerts)**   
 - ✅ SLO definitions (availability: 99.9%, latency: P95<500ms, P99<2s)
 - ✅ Prometheus alert rules (25+ alerts across 7 categories)
 - ✅ Error budget tracking (fast/slow burn rate alerts)
@@ -366,21 +366,3 @@ Use path filters to optimize builds.
 - README + docs updated
 
 ---
-
-## Start Phase 1 now? — Readiness checklist (quick)
-
-- Prereqs installed:
-  - Docker (and docker compose plugin)
-  - Java 17, Maven/Gradle (for Spring services)
-  - Git + repo cloned
-- Repo basics present:
-  - infra/docker-compose.yml exists and is runnable
-  - docs/ (ADRs / OpenAPI placeholders) present or planned
-  - CI skeleton (GitHub Actions) available to run tests
-- Quick smoke-run (from repo root):
-  - docker compose -f infra/docker-compose.yml up --build -d
-  - docker compose -f infra/docker-compose.yml ps
-  - curl -fsS http://localhost:8081 || echo "schema-registry not ready"
-  - pg_isready -h localhost -p 5432
-- If all checks pass: begin Phase 1 tasks (create service template, ADRs, scaffold catalog service).
-- If anything missing: complete the checklist items (infra, ADRs, CI) before implementing core services.

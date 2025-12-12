@@ -121,7 +121,7 @@ helm version
 
 ```bash
 # 1. Create Kind cluster
-cd k8s/scripts
+cd deployment/k8s/scripts
 ./setup-kind.sh
 
 # 2. Verify cluster
@@ -129,10 +129,10 @@ kubectl get nodes
 kubectl get namespaces | grep platform
 
 # 3. Deploy infrastructure
-kubectl apply -f k8s/base/infrastructure/
+kubectl apply -f deployment/k8s/base/infrastructure/
 
 # 4. Deploy services
-helm install catalog-service helm/charts/catalog-service \
+helm install catalog-service deployment/helm/charts/catalog-service \
   -n platform-core \
   --create-namespace
 
@@ -144,15 +144,15 @@ kubectl get all -n platform-core
 
 ```bash
 # 1. Create Minikube cluster
-cd k8s/scripts
+cd deployment/k8s/scripts
 ./setup-minikube.sh
 
 # 2. Start tunnel (in separate terminal)
 minikube tunnel
 
 # 3. Deploy same as Kind
-kubectl apply -f k8s/base/infrastructure/
-helm install catalog-service helm/charts/catalog-service -n platform-core
+kubectl apply -f deployment/k8s/base/infrastructure/
+helm install catalog-service deployment/helm/charts/catalog-service -n platform-core
 
 # 4. Access dashboard
 minikube dashboard
@@ -172,7 +172,7 @@ minikube dashboard
 
 ### Configuration
 
-**File:** `k8s/scripts/kind-cluster-config.yaml`
+**File:** `deployment/k8s/scripts/kind-cluster-config.yaml`
 
 ```yaml
 kind: Cluster
@@ -202,7 +202,7 @@ nodes:
 
 ```bash
 # Create
-kind create cluster --config k8s/scripts/kind-cluster-config.yaml
+kind create cluster --config deployment/k8s/scripts/kind-cluster-config.yaml
 
 # Verify
 kubectl cluster-info --context kind-ecommerce-platform
@@ -304,7 +304,7 @@ minikube dashboard --url
 
 ### Definitions
 
-**File:** `k8s/namespaces/namespaces.yaml`
+**File:** `deployment/k8s/namespaces/namespaces.yaml`
 
 ```yaml
 ---
@@ -339,7 +339,7 @@ metadata:
 
 ```bash
 # Apply
-kubectl apply -f k8s/namespaces/namespaces.yaml
+kubectl apply -f deployment/k8s/namespaces/namespaces.yaml
 
 # Verify
 kubectl get namespaces --show-labels | grep platform
@@ -387,7 +387,7 @@ kubectl delete namespace platform-core
 ### Chart Structure
 
 ```
-helm/charts/catalog-service/
+deployment/helm/charts/catalog-service/
 ├── Chart.yaml              # Chart metadata
                             # Purpose: Name, version, description
 ├── values.yaml             # Default values
@@ -419,17 +419,17 @@ helm/charts/catalog-service/
 
 ```bash
 # Install with default values
-helm install catalog-service helm/charts/catalog-service \
+helm install catalog-service deployment/helm/charts/catalog-service \
   -n platform-core \
   --create-namespace
 
 # Install with custom values
-helm install catalog-service helm/charts/catalog-service \
+helm install catalog-service deployment/helm/charts/catalog-service \
   -n platform-core \
-  -f helm/charts/catalog-service/values-dev.yaml
+  -f deployment/helm/charts/catalog-service/values-dev.yaml
 
 # Install with overrides
-helm install catalog-service helm/charts/catalog-service \
+helm install catalog-service deployment/helm/charts/catalog-service \
   -n platform-core \
   --set image.tag=v1.0.0 \
   --set replicaCount=3
@@ -439,13 +439,13 @@ helm install catalog-service helm/charts/catalog-service \
 
 ```bash
 # Upgrade
-helm upgrade catalog-service helm/charts/catalog-service \
+helm upgrade catalog-service deployment/helm/charts/catalog-service \
   -n platform-core
 
 # Upgrade with new values
-helm upgrade catalog-service helm/charts/catalog-service \
+helm upgrade catalog-service deployment/helm/charts/catalog-service \
   -n platform-core \
-  -f helm/charts/catalog-service/values-prod.yaml
+  -f deployment/helm/charts/catalog-service/values-prod.yaml
 
 # Rollback
 helm rollback catalog-service 1 -n platform-core
@@ -473,7 +473,7 @@ helm uninstall catalog-service -n platform-core
 
 ### Sample Deployment
 
-**File:** `helm/charts/catalog-service/templates/deployment.yaml`
+**File:** `deployment/helm/charts/catalog-service/templates/deployment.yaml`
 
 ```yaml
 apiVersion: apps/v1
@@ -533,7 +533,7 @@ spec:
 
 ### Sample Values
 
-**File:** `helm/charts/catalog-service/values.yaml`
+**File:** `deployment/helm/charts/catalog-service/values.yaml`
 
 ```yaml
 replicaCount: 2
