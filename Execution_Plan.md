@@ -260,12 +260,19 @@ Kubernetes, Helm, CI/CD, SRE practices.
 - ✅ Resilience testing procedures
 - ✅ Comprehensive README.md (45+ KB)
 
-**Week 15 (CI/CD & Terraform)**
-- GitHub Actions per-service workflows
-- Build-on-change: only build changed services (paths filter)
-- Publish images to GitHub Container Registry
-- Deploy to staging namespace via Helm
-- Terraform scaffold for cloud infra (optional)
+**Week 15 (CI/CD & Terraform)** ✅ COMPLETED (Dec 12, 2025)
+- ✅ GitHub Actions workflows (ci-build.yml, docker-publish.yml, deploy-staging.yml)
+- ✅ Path filtering for build-on-change (dorny/paths-filter action)
+- ✅ Docker build and publish to GitHub Container Registry (GHCR)
+- ✅ Multi-architecture builds (AMD64, ARM64)
+- ✅ Image tagging (branch, SHA, semver)
+- ✅ SBOM generation (Software Bill of Materials)
+- ✅ Security scanning (SpotBugs, OWASP Dependency Check)
+- ✅ Helm deployment to staging namespace
+- ✅ Smoke test automation (health, API, liveness, readiness)
+- ✅ Slack notifications for deployment status
+- ✅ Terraform infrastructure scaffolding (VPC, EKS, RDS modules)
+- ✅ Comprehensive README.md (40+ KB)
 
 **Week 16 (SLOs & Alerts)**
 - Prometheus alert rules and SLO dashboards

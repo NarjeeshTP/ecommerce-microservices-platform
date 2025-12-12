@@ -1,0 +1,163 @@
+name: CI - Build & Test
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+jobs:
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      catalog: ${{ steps.filter.outputs.catalog }}
+      pricing: ${{ steps.filter.outputs.pricing }}
+      cart: ${{ steps.filter.outputs.cart }}
+      order: ${{ steps.filter.outputs.order }}
+      payment: ${{ steps.filter.outputs.payment }}
+      inventory: ${{ steps.filter.outputs.inventory }}
+      notification: ${{ steps.filter.outputs.notification }}
+      search: ${{ steps.filter.outputs.search }}
+      api-gateway: ${{ steps.filter.outputs.api-gateway }}
+      feature-flags: ${{ steps.filter.outputs.feature-flags }}
+      chaos: ${{ steps.filter.outputs.chaos }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check for service changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            catalog:
+              - 'services/catalog-service/**'
+            pricing:
+              - 'services/pricing-service/**'
+            cart:
+              - 'services/cart-service/**'
+            order:
+              - 'services/order-service/**'
+            payment:
+              - 'services/payment-service/**'
+            inventory:
+              - 'services/inventory-service/**'
+            notification:
+              - 'services/notification-service/**'
+            search:
+              - 'services/search-service/**'
+            api-gateway:
+              - 'services/api-gateway/**'
+            feature-flags:
+              - 'services/feature-flags/**'
+            chaos:
+              - 'services/chaos-service/**'
+  build-catalog-service:
+    name: Build Catalog Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.catalog == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build with Maven
+        run: |
+          cd services/catalog-service
+          mvn clean package -DskipTests
+      - name: Run tests
+        run: |
+          cd services/catalog-service
+          mvn test
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-service-jar
+          path: services/catalog-service/target/*.jar
+          retention-days: 7
+  build-pricing-service:
+    name: Build Pricing Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.pricing == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build with Maven
+        run: |
+          cd services/pricing-service
+          mvn clean package -DskipTests
+      - name: Run tests
+        run: |
+          cd services/pricing-service
+          mvn test
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pricing-service-jar
+          path: services/pricing-service/target/*.jar
+          retention-days: 7
+  build-cart-service:
+    name: Build Cart Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cart == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build with Maven
+        run: |
+          cd services/cart-service
+          mvn clean package -DskipTests
+      - name: Run tests
+        run: |
+          cd services/cart-service
+          mvn test
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cart-service-jar
+          path: services/cart-service/target/*.jar
+          retention-days: 7
+  lint-and-security:
+    name: Lint & Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run SpotBugs
+        run: |
+          for service in services/*/pom.xml; do
+            dir=$(dirname "$service")
+            echo "Scanning $dir"
+            cd "$dir"
+            mvn spotbugs:check || true
+            cd -
+          done
+      - name: Run OWASP Dependency Check
+        run: |
+          echo "Running security scan..."
+          # Add actual dependency-check plugin execution

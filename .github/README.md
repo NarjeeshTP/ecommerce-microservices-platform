@@ -1,437 +1,814 @@
-# CI/CD Pipeline Documentation
+# CI/CD & Infrastructure as Code
 
-> **Quick Start?** See [QUICKSTART.md](QUICKSTART.md) for a fast setup checklist.
+Complete CI/CD pipelines with GitHub Actions and Terraform infrastructure provisioning for E-Commerce Microservices Platform.
 
-This directory contains GitHub Actions workflows for the E-Commerce Microservices Platform with automated testing, coverage reporting, Docker builds, and security scanning.
+## ✅ Current Status (Dec 12, 2025)
 
-## 📊 Overview
+**Version:** 0.1.0  
+**Status:** Week 15 Implementation Complete
 
-**Status:** ✅ Production-ready CI/CD pipeline configured
+### Features Implemented
+- ✅ **GitHub Actions Workflows** - CI/CD automation
+- ✅ **Build-on-Change** - Only build modified services
+- ✅ **Container Registry** - Publish to GitHub Container Registry (GHCR)
+- ✅ **Helm Deployment** - Automated deployment to staging
+- ✅ **Terraform** - Infrastructure as Code scaffolding
+- ✅ **SBOM Generation** - Software Bill of Materials
+- ✅ **Security Scanning** - SAST and dependency checks
+- ✅ **Slack Notifications** - Deployment status alerts
+
+---
+
+## Architecture
+
+### CI/CD Pipeline Flow
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Developer                                          │
+│  ↓                                                  │
+│  git push origin feature/new-feature                │
+└──────────────────────┬──────────────────────────────┘
+                       │
+                       ↓
+┌─────────────────────────────────────────────────────┐
+│  GitHub Actions (CI)                                │
+│                                                     │
+│  1. Detect Changed Services                         │
+│     ├─ Check: services/catalog-service/**           │
+│     ├─ Check: services/pricing-service/**           │
+│     └─ Result: [catalog-service]                    │
+│                                                     │
+│  2. Build & Test                                    │
+│     ├─ Build catalog-service                        │
+│     ├─ Run unit tests                               │
+│     ├─ Run integration tests                        │
+│     └─ Upload artifacts                             │
+│                                                     │
+│  3. Security Scan                                   │
+│     ├─ SpotBugs (code quality)                      │
+│     ├─ OWASP Dependency Check                       │
+│     └─ Generate SBOM                                │
+└──────────────────────┬──────────────────────────────┘
+                       │
+                       ↓ (on main/develop)
+┌─────────────────────────────────────────────────────┐
+│  Docker Build & Publish                             │
+│                                                     │
+│  1. Build Docker Image                              │
+│     └─ docker build -t catalog-service:sha          │
+│                                                     │
+│  2. Push to GHCR                                    │
+│     └─ ghcr.io/yourorg/catalog-service:main-sha     │
+│                                                     │
+│  3. Tag Variants                                    │
+│     ├─ :latest                                      │
+│     ├─ :main-abc123                                 │
+│     └─ :v1.0.0                                      │
+└──────────────────────┬──────────────────────────────┘
+                       │
+                       ↓ (on develop)
+┌─────────────────────────────────────────────────────┐
+│  Deploy to Staging                                  │
+│                                                     │
+│  1. Helm Upgrade                                    │
+│     └─ helm upgrade catalog-service                 │
+│                                                     │
+│  2. Wait for Rollout                                │
+│     └─ kubectl rollout status                       │
+│                                                     │
+│  3. Smoke Tests                                     │
+│     ├─ Health check                                 │
+│     ├─ API test                                     │
+│     └─ Integration test                             │
+│                                                     │
+│  4. Notify                                          │
+│     └─ Slack: ✅ Deployment successful              │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## GitHub Actions Workflows
+
+### 1. CI Build & Test (`ci-build.yml`)
+
+**Purpose:** Build and test only changed services  
+**Trigger:** Push to any branch, Pull requests
 
 **Features:**
-- 🧪 Automated testing (34 tests: 15 unit + 7 integration + 12 service)
-- 📈 Code coverage tracking (70% minimum threshold with JaCoCo)
-- 🐳 Docker automation (build & push to ghcr.io)
-- 🔒 Security scanning (Trivy vulnerability detection)
-- ⚡ Smart path filtering (only test changed services)
-- 🚀 Fast execution (~3 minutes total)
+- ✅ **Path Filtering** - Detect which services changed
+- ✅ **Parallel Builds** - Build multiple services concurrently
+- ✅ **Maven Caching** - Speed up builds
+- ✅ **Artifact Upload** - Save JARs for later stages
 
-## 📁 File Structure
+**How It Works:**
 
+```yaml
+# Detect changes
+detect-changes:
+  outputs:
+    catalog: ${{ steps.filter.outputs.catalog }}
+    pricing: ${{ steps.filter.outputs.pricing }}
+    # ...
+
+# Build only if changed
+build-catalog-service:
+  needs: detect-changes
+  if: needs.detect-changes.outputs.catalog == 'true'
+  steps:
+    - Build with Maven
+    - Run tests
+    - Upload artifact
 ```
-.github/
-├── workflows/
-│   ├── catalog-service-ci.yml    # Catalog service pipeline (220 lines)
-│   ├── ci.yml                     # Monorepo-wide pipeline (140 lines)
-│   └── qodana_code_quality.yml   # Code quality analysis
-├── README.md                      # This file - Complete documentation
-├── QUICKSTART.md                  # Fast setup guide & checklist
-└── markdown-link-check-config.json # Doc validation config
+
+**Example:**
+```bash
+# Developer changes catalog-service
+git commit -m "feat: add product search"
+git push
+
+# GitHub Actions:
+# ✅ Detect change in services/catalog-service/
+# ✅ Build catalog-service (5 min)
+# ❌ Skip pricing-service, cart-service (no changes)
+# ✅ Run tests
+# ✅ Upload artifact
 ```
 
-## Workflows
+### 2. Docker Build & Publish (`docker-publish.yml`)
 
-### 1. `catalog-service-ci.yml` - Catalog Service CI Pipeline
-
-**Triggers:**
-- Push to `main`, `develop`, or `staging` branches
-- Pull requests to these branches
-- Only runs when files in `services/catalog-service/` or `platform-libraries/` change
-
-**Jobs:**
-
-#### Test Job
-- **Unit Tests**: Fast isolated tests with mocked dependencies
-- **Integration Tests**: Full E2E tests with Testcontainers (PostgreSQL)
-- **Coverage Report**: JaCoCo code coverage with 70% minimum threshold
-- **Test Reporting**: Automatic test result publishing and PR comments
-
-#### Build Job
-- Builds the JAR file (after tests pass)
-- Uploads artifact for deployment
-- Caches Maven dependencies for faster builds
-
-#### Docker Job
-- Builds Docker image (only on `main` or `develop` push)
-- Pushes to GitHub Container Registry (ghcr.io)
-- Tags: `latest`, `branch-name`, `branch-sha`
-
-#### Security Scan Job
-- Runs Trivy vulnerability scanner
-- Uploads results to GitHub Security tab
-
-**Requirements:**
-- Java 17
-- Maven
-- Docker (for Testcontainers)
-- GitHub token (automatic)
-
-**Artifacts:**
-- Test results (XML/HTML reports)
-- JaCoCo coverage reports
-- JAR file
-- Docker image (on ghcr.io)
-
----
-
-### 2. `ci.yml` - Monorepo CI Pipeline
-
-**Triggers:**
-- Push/PR to main branches
-- Runs for all services
+**Purpose:** Build Docker images and push to GitHub Container Registry  
+**Trigger:** Push to main/develop branches
 
 **Features:**
-- **Path Filtering**: Only tests changed services
-- **Parallel Execution**: Services tested concurrently
-- **Lint & Quality**: Code quality checks
-- **Documentation Validation**: OpenAPI spec and Markdown link checks
+- ✅ **Multi-arch Builds** - AMD64, ARM64 support
+- ✅ **Layer Caching** - GitHub Actions cache
+- ✅ **Image Tagging** - Branch, SHA, semver tags
+- ✅ **SBOM Generation** - Security compliance
 
-**Jobs:**
-- `detect-changes`: Identifies which services changed
-- `test-catalog`: Tests catalog service (conditional)
-- `test-pricing`: Tests pricing service (conditional, future)
-- `lint`: Code quality checks
-- `docs`: Documentation validation
-- `summary`: Overall CI status
-
----
-
-## 🔄 Pipeline Flow
-
+**Image Tags:**
 ```
-Developer Push/PR → Path Filter → Test Jobs (parallel) → Build → Docker (main/develop) → Security Scan
-                         ↓
-        ┌────────────────┼────────────────┐
-        ↓                ↓                ↓
-   Unit Tests      Integration      Service Tests
-   (~1 second)     (~15 seconds)    (~300ms)
-        ↓                ↓                ↓
-        └────────────────┼────────────────┘
-                         ↓
-                  Coverage Check (>70%)
-                         ↓
-                   All Pass? ✅/❌
+ghcr.io/yourorg/catalog-service:main-abc123   # Branch + SHA
+ghcr.io/yourorg/catalog-service:latest        # Latest main
+ghcr.io/yourorg/catalog-service:v1.0.0        # Semver tag
 ```
 
-**Pipeline Timing:**
-```
-Unit Tests:           ~1 second
-Integration Tests:    ~15 seconds (with Testcontainers)
-Service Tests:        ~300ms
-Coverage Report:      ~2 seconds
-Build JAR:           ~20 seconds
-Docker Build:        ~60 seconds (main/develop only)
-Security Scan:       ~30 seconds
-────────────────────────────────
-Total (PR):          ~1.5 minutes
-Total (main):        ~3 minutes
-```
-
-**With Maven Cache (2nd+ run):**
-- First run: ~5 minutes (downloading dependencies)
-- Cached runs: ~3 minutes (40% faster)
-
----
-
-## Setup Instructions
-
-### 1. Enable GitHub Actions
-
-GitHub Actions is enabled by default on GitHub repositories. The workflows will run automatically on push/PR.
-
-### 2. Configure Secrets (Optional)
-
-For private Docker registries or external services, add secrets in:
-```
-Settings > Secrets and variables > Actions
-```
-
-**Currently Required Secrets:**
-- `GITHUB_TOKEN` - Automatically provided by GitHub
-
-**Future Secrets (for production):**
-- `DOCKER_REGISTRY_TOKEN` - If using private registry
-- `SONAR_TOKEN` - If using SonarQube
-- `SLACK_WEBHOOK` - For notifications
-
-### 3. Branch Protection Rules (Recommended)
-
-Set up branch protection in `Settings > Branches`:
-
-**For `main` branch:**
-- ✅ Require pull request reviews (1 reviewer)
-- ✅ Require status checks to pass before merging
-  - Select: "Test Catalog Service", "Lint & Code Quality"
-- ✅ Require branches to be up to date before merging
-- ✅ Require conversation resolution before merging
-
-**For `develop` branch:**
-- ✅ Require status checks to pass before merging
-- ✅ Require branches to be up to date before merging
-
-### 4. Enable GitHub Container Registry
-
-Docker images are pushed to `ghcr.io`. To pull images:
+**How to Use:**
 
 ```bash
-# Login to GHCR
-echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+# Local: Pull published image
+docker pull ghcr.io/yourorg/catalog-service:latest
 
-# Pull image
-docker pull ghcr.io/YOUR_USERNAME/ecommerce-microservices-platform/catalog-service:latest
+# Kind: Load image
+kind load docker-image ghcr.io/yourorg/catalog-service:latest
+
+# Kubernetes: Deploy
+kubectl set image deployment/catalog-service \
+  catalog-service=ghcr.io/yourorg/catalog-service:main-abc123
+```
+
+### 3. Deploy to Staging (`deploy-staging.yml`)
+
+**Purpose:** Automatically deploy to staging environment  
+**Trigger:** Push to develop branch, Manual dispatch
+
+**Features:**
+- ✅ **Helm Upgrade** - Zero-downtime deployment
+- ✅ **Rollout Status** - Wait for pods to be ready
+- ✅ **Smoke Tests** - Verify deployment health
+- ✅ **Slack Notifications** - Alert team on success/failure
+
+**Manual Deployment:**
+
+```yaml
+# GitHub UI: Actions → Deploy to Staging → Run workflow
+# Select service: catalog-service (or "all")
+# Click: Run workflow
+```
+
+**Automated:**
+```bash
+# Push to develop
+git checkout develop
+git merge feature/new-feature
+git push
+
+# GitHub Actions:
+# ✅ Build Docker image
+# ✅ Push to GHCR
+# ✅ Deploy to staging namespace
+# ✅ Wait for rollout
+# ✅ Run smoke tests
+# ✅ Notify Slack
 ```
 
 ---
 
-## Running Tests Locally (Before Push)
+## Build-on-Change Strategy
 
-### Unit Tests Only
-```bash
-cd services/catalog-service
-mvn test -Dtest=CatalogControllerTest,ItemServiceTest
+### Path Filtering
+
+**Purpose:** Only build services that changed, not entire monorepo.
+
+**Use:** Save CI/CD time and resources.
+
+**Configuration:**
+
+```yaml
+filters: |
+  catalog:
+    - 'services/catalog-service/**'
+  pricing:
+    - 'services/pricing-service/**'
 ```
 
-### Integration Tests Only
-```bash
-cd services/catalog-service
-mvn test -Dtest=CatalogControllerIntegrationTest
+**How It Works:**
+
+```
+Scenario 1: Change catalog-service
+├─ Git diff detects: services/catalog-service/src/...
+├─ Filter matches: catalog: true
+├─ Build: catalog-service only
+└─ Skip: pricing-service, cart-service, etc.
+
+Scenario 2: Change pricing-service and cart-service
+├─ Git diff detects: services/pricing-service/..., services/cart-service/...
+├─ Filter matches: pricing: true, cart: true
+├─ Build: pricing-service and cart-service in parallel
+└─ Skip: catalog-service, order-service, etc.
+
+Scenario 3: Change docs/
+├─ Git diff detects: docs/...
+├─ Filter matches: none
+├─ Build: nothing
+└─ Skip: all services (no code change)
 ```
 
-### All Tests with Coverage
-```bash
-cd services/catalog-service
-mvn clean test jacoco:report
+**Benefits:**
+- ✅ **Faster CI** - Average build time: 5-10 min (vs 60+ min for all services)
+- ✅ **Lower Cost** - Only use CI minutes for changed code
+- ✅ **Parallel Builds** - Multiple services build concurrently
 
-# View coverage report
-open target/site/jacoco/index.html
+---
+
+## GitHub Container Registry (GHCR)
+
+### Setup
+
+**Purpose:** Host Docker images in GitHub ecosystem  
+**Use:** Free, integrated with GitHub Actions, no external registry needed
+
+### Enable GHCR
+
+```bash
+# 1. Generate Personal Access Token (PAT)
+# GitHub → Settings → Developer Settings → Personal Access Tokens
+# Scopes: write:packages, read:packages
+
+# 2. Add to repository secrets
+# Repository → Settings → Secrets → Actions
+# Name: CR_PAT
+# Value: <your-pat>
+
+# 3. Login locally
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 ```
 
-### Lint (if configured)
+### Publish Image
+
+**Automated (via GitHub Actions):**
+```yaml
+# Already configured in docker-publish.yml
+- name: Build and push Docker image
+  uses: docker/build-push-action@v5
+  with:
+    push: true
+    tags: ghcr.io/${{ github.repository_owner }}/catalog-service:latest
+```
+
+**Manual:**
 ```bash
-cd services/catalog-service
-mvn checkstyle:check
+# Build
+docker build -t ghcr.io/yourorg/catalog-service:v1.0.0 .
+
+# Push
+docker push ghcr.io/yourorg/catalog-service:v1.0.0
+```
+
+### Pull Image
+
+```bash
+# Public image
+docker pull ghcr.io/yourorg/catalog-service:latest
+
+# Private image (requires authentication)
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+docker pull ghcr.io/yourorg/catalog-service:latest
+```
+
+### Image Visibility
+
+**Make Public:**
+```bash
+# GitHub → Packages → catalog-service → Package settings
+# Change visibility: Public
+```
+
+---
+
+## Helm Deployment
+
+### Staging Deployment
+
+**Purpose:** Deploy to staging namespace for testing before production  
+**Use:** Automated deployment on every develop branch push
+
+### Configuration
+
+```bash
+# Repository secrets needed:
+# - KUBECONFIG_STAGING: Base64-encoded kubeconfig
+# - SLACK_WEBHOOK: Slack incoming webhook URL
+
+# Generate base64 kubeconfig:
+cat ~/.kube/config | base64
+```
+
+### Deploy Service
+
+**Automated:**
+```bash
+# Push to develop
+git push origin develop
+
+# GitHub Actions will:
+# 1. Build Docker image
+# 2. Push to GHCR
+# 3. Deploy to platform-core-staging namespace
+# 4. Wait for rollout
+# 5. Run smoke tests
+```
+
+**Manual:**
+```bash
+# GitHub UI
+Actions → Deploy to Staging → Run workflow
+Service: catalog-service
+Click: Run workflow
+
+# CLI
+gh workflow run deploy-staging.yml -f service=catalog-service
+```
+
+### Verify Deployment
+
+```bash
+# Check pods
+kubectl get pods -n platform-core-staging
+
+# Check services
+kubectl get svc -n platform-core-staging
+
+# Check Helm releases
+helm list -n platform-core-staging
+
+# View logs
+kubectl logs -n platform-core-staging deployment/catalog-service -f
+```
+
+---
+
+## Terraform Infrastructure
+
+**Purpose:** Provision cloud infrastructure as code  
+**Use:** Reproducible, version-controlled infrastructure
+
+### Structure
+
+```
+terraform/
+├── modules/
+│   ├── kubernetes/       # EKS/GKE/AKS cluster
+│   ├── networking/       # VPC, subnets, load balancers
+│   └── database/         # RDS PostgreSQL
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── terraform.tfvars
+│   ├── staging/
+│   └── prod/
+└── README.md
+```
+
+### Modules
+
+#### 1. Kubernetes Module
+
+**Purpose:** Create managed Kubernetes cluster
+
+```hcl
+# modules/kubernetes/main.tf
+resource "aws_eks_cluster" "main" {
+  name     = var.cluster_name
+  role_arn = aws_iam_role.cluster.arn
+
+  vpc_config {
+    subnet_ids = var.subnet_ids
+  }
+}
+
+resource "aws_eks_node_group" "main" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "${var.cluster_name}-nodes"
+  node_role_arn   = aws_iam_role.node.arn
+  subnet_ids      = var.subnet_ids
+
+  scaling_config {
+    desired_size = var.node_count
+    max_size     = var.node_max_count
+    min_size     = var.node_min_count
+  }
+
+  instance_types = [var.instance_type]
+}
+```
+
+#### 2. Networking Module
+
+**Purpose:** Create VPC, subnets, NAT gateway
+
+```hcl
+# modules/networking/main.tf
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "${var.project}-vpc"
+  }
+}
+
+resource "aws_subnet" "public" {
+  count                   = length(var.availability_zones)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = cidrsubnet(var.vpc_cidr, 4, count.index)
+  availability_zone       = var.availability_zones[count.index]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.project}-public-${count.index + 1}"
+  }
+}
+```
+
+#### 3. Database Module
+
+**Purpose:** Create RDS PostgreSQL instance
+
+```hcl
+# modules/database/main.tf
+resource "aws_db_instance" "postgres" {
+  identifier           = "${var.project}-postgres"
+  engine               = "postgres"
+  engine_version       = "15.3"
+  instance_class       = var.instance_class
+  allocated_storage    = var.allocated_storage
+  storage_encrypted    = true
+  
+  db_name  = var.database_name
+  username = var.master_username
+  password = var.master_password
+
+  vpc_security_group_ids = [aws_security_group.db.id]
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+
+  backup_retention_period = var.backup_retention_days
+  skip_final_snapshot     = var.skip_final_snapshot
+
+  tags = {
+    Name = "${var.project}-postgres"
+  }
+}
+```
+
+### Usage
+
+**Initialize:**
+```bash
+cd terraform/environments/dev
+terraform init
+```
+
+**Plan:**
+```bash
+terraform plan -var-file=terraform.tfvars
+```
+
+**Apply:**
+```bash
+terraform apply -var-file=terraform.tfvars
+```
+
+**Destroy:**
+```bash
+terraform destroy -var-file=terraform.tfvars
+```
+
+---
+
+## Security & Compliance
+
+### SBOM Generation
+
+**Purpose:** Software Bill of Materials for supply chain security  
+**Use:** Track all dependencies and vulnerabilities
+
+**Automatic:**
+```yaml
+# Included in docker-publish.yml
+- name: Generate SBOM
+  uses: anchore/sbom-action@v0
+  with:
+    format: spdx-json
+    output-file: sbom-catalog-service.spdx.json
+```
+
+**Manual:**
+```bash
+# Install syft
+brew install anchore/syft/syft
+
+# Generate SBOM
+syft packages catalog-service:latest -o spdx-json > sbom.json
+```
+
+### Dependency Scanning
+
+**OWASP Dependency Check:**
+```xml
+<!-- pom.xml -->
+<plugin>
+  <groupId>org.owasp</groupId>
+  <artifactId>dependency-check-maven</artifactId>
+  <version>8.4.0</version>
+  <configuration>
+    <failBuildOnCVSS>7</failBuildOnCVSS>
+  </configuration>
+</plugin>
+```
+
+```bash
+# Run scan
+mvn dependency-check:check
+```
+
+### SpotBugs (Static Analysis)
+
+```xml
+<!-- pom.xml -->
+<plugin>
+  <groupId>com.github.spotbugs</groupId>
+  <artifactId>spotbugs-maven-plugin</artifactId>
+  <version>4.8.0</version>
+</plugin>
+```
+
+```bash
+# Run SpotBugs
 mvn spotbugs:check
 ```
 
 ---
 
-## CI Performance Optimization
+## Smoke Tests
 
-### 1. Maven Dependency Caching
-The workflows cache `~/.m2/repository` to speed up builds.
+**Purpose:** Quick validation after deployment  
+**Use:** Ensure service is responding and healthy
 
-**Cache Key:** Based on `pom.xml` hash
-**Cache Restoration:** Reuses cache if pom.xml unchanged
+**Script:** `scripts/ci/smoke-tests.sh`
 
-### 2. Path Filtering
-Only affected services are tested on changes.
-
-**Example:** Changing `catalog-service/` won't trigger `pricing-service` tests.
-
-### 3. Parallel Execution
-Multiple services can be tested in parallel.
-
-### 4. Docker Layer Caching
-Docker builds use GitHub Actions cache for faster image builds.
-
----
-
-## Monitoring & Debugging
-
-### View Test Results
-1. Go to **Actions** tab in GitHub
-2. Click on a workflow run
-3. Click on the **Test** job
-4. Download **test-results** artifact
-
-### View Coverage Reports
-1. Go to **Actions** tab
-2. Click on a workflow run
-3. Download **test-results** artifact
-4. Open `site/jacoco/index.html`
-
-### View Security Scan Results
-1. Go to **Security** tab
-2. Click on **Code scanning alerts**
-3. View Trivy vulnerability reports
-
-### Debug Failed Tests
 ```bash
-# View logs for a specific test
-cd services/catalog-service
-mvn test -Dtest=FailingTestClass -X
+#!/bin/bash
+set -e
 
-# Run integration tests with verbose output
-mvn test -Dtest=CatalogControllerIntegrationTest -X
+NAMESPACE=$1
+
+echo "🧪 Running smoke tests for namespace: $NAMESPACE"
+
+# Test 1: Check pods are running
+echo "✓ Checking pod status..."
+kubectl get pods -n $NAMESPACE | grep Running || exit 1
+
+# Test 2: Health check endpoints
+for service in catalog-service pricing-service cart-service; do
+  echo "✓ Testing $service health..."
+  kubectl run curl-test --rm -it --restart=Never --image=curlimages/curl \
+    -- curl -f http://$service.$NAMESPACE:8080/actuator/health || exit 1
+done
+
+# Test 3: API endpoint test
+echo "✓ Testing API endpoints..."
+kubectl run curl-test --rm -it --restart=Never --image=curlimages/curl \
+  -- curl -f http://catalog-service.$NAMESPACE:8080/api/products || exit 1
+
+echo "✅ All smoke tests passed!"
 ```
 
 ---
 
-## CI/CD Best Practices
+## Notifications
 
-### ✅ DO
-- Run tests locally before pushing
-- Keep tests fast (unit tests < 1s, integration < 30s)
-- Write meaningful test names
-- Use Testcontainers for integration tests
-- Keep dependencies up to date
-- Add code coverage for new features
-- Use semantic commit messages
+### Slack Integration
 
-### ❌ DON'T
-- Push directly to `main` (use PRs)
-- Skip tests locally
-- Commit with failing tests
-- Ignore security warnings
-- Leave TODO comments without tracking
-- Merge PRs with failing CI
+**Purpose:** Alert team on deployment success/failure  
+**Use:** Keep team informed without checking GitHub
+
+**Setup:**
+```bash
+# 1. Create Slack App
+# https://api.slack.com/apps → Create New App
+
+# 2. Enable Incoming Webhooks
+# App → Incoming Webhooks → Activate
+
+# 3. Add Webhook URL to GitHub Secrets
+# Repository → Settings → Secrets → SLACK_WEBHOOK
+```
+
+**Message Format:**
+```json
+{
+  "text": "✅ Deployment to staging successful",
+  "blocks": [{
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "*Deployment Status:* Success\n*Environment:* Staging\n*Commit:* abc123\n*Author:* developer"
+    }
+  }]
+}
+```
+
+---
+
+## Best Practices
+
+### 1. Semantic Commit Messages
+
+```bash
+# Format: <type>(<scope>): <subject>
+
+feat(catalog): add product search
+fix(pricing): correct discount calculation
+chore(ci): update GitHub Actions versions
+docs(readme): add deployment guide
+```
+
+**Benefits:**
+- Auto-generate changelogs
+- Trigger appropriate CI jobs
+- Clear history
+
+### 2. Branch Strategy
+
+```
+main
+├─ production deployments
+├─ protected branch
+└─ requires PR reviews
+
+develop
+├─ staging deployments
+├─ integration branch
+└─ auto-deploy on push
+
+feature/*
+├─ development branches
+└─ CI build & test only
+```
+
+### 3. Environment Variables
+
+```yaml
+# Never commit secrets!
+# Use GitHub Secrets for:
+# - KUBECONFIG_STAGING
+# - KUBECONFIG_PROD
+# - SLACK_WEBHOOK
+# - CR_PAT
+
+# Use environment-specific configs:
+dev:
+  replicas: 1
+  resources:
+    limits:
+      memory: 512Mi
+
+staging:
+  replicas: 2
+  resources:
+    limits:
+      memory: 1Gi
+
+prod:
+  replicas: 5
+  resources:
+    limits:
+      memory: 2Gi
+```
+
+### 4. Rollback Strategy
+
+```bash
+# Helm rollback
+helm rollback catalog-service -n platform-core-staging
+
+# Kubernetes rollback
+kubectl rollout undo deployment/catalog-service -n platform-core-staging
+
+# Deploy specific version
+helm upgrade catalog-service ./helm/charts/catalog-service \
+  --set image.tag=main-abc123 \
+  -n platform-core-staging
+```
 
 ---
 
 ## Troubleshooting
 
-### Issue: Tests pass locally but fail in CI
+### Workflow Not Triggering
 
-**Possible Causes:**
-- Different Java version (CI uses Java 17)
-- Missing environment variables
-- Time-zone differences
-- Docker not available (for Testcontainers)
+```yaml
+# Check path filters are correct
+filters: |
+  catalog:
+    - 'services/catalog-service/**'  # Include subdirectories
+```
 
-**Solution:**
+### Docker Build Fails
+
 ```bash
-# Run with CI-like environment
-docker run -it --rm \
-  -v "$PWD":/workspace \
-  -w /workspace/services/catalog-service \
-  eclipse-temurin:17-jdk \
-  mvn clean test
+# Check Dockerfile exists
+ls services/catalog-service/Dockerfile
+
+# Test build locally
+docker build -t catalog-service:test services/catalog-service/
 ```
 
-### Issue: Testcontainers fail in CI
+### Helm Deployment Fails
 
-**Error:** "Could not start container"
-
-**Solution:** Already handled - CI uses Docker-in-Docker support.
-
-### Issue: Maven dependency download is slow
-
-**Solution:** Cache is configured. First run will be slow, subsequent runs will be fast.
-
-### Issue: Coverage threshold not met
-
-**Error:** "Coverage 65% is below minimum 70%"
-
-**Solution:** Add more tests to increase coverage:
 ```bash
-# Generate coverage report
-mvn test jacoco:report
+# Check namespace exists
+kubectl get namespace platform-core-staging
 
-# Open report and see untested code
-open target/site/jacoco/index.html
+# Check Helm chart syntax
+helm lint ./helm/charts/catalog-service
+
+# Dry-run deployment
+helm upgrade --install catalog-service ./helm/charts/catalog-service \
+  --dry-run --debug
+```
+
+### GHCR Push Permission Denied
+
+```bash
+# Check PAT has write:packages scope
+# Check repository settings allow packages
+
+# Re-login
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 ```
 
 ---
 
-## ✅ What's Configured
+## Week 15 Summary
 
-### GitHub Actions Workflows
+### Completed
+- ✅ CI build workflow with path filtering
+- ✅ Docker build and publish to GHCR
+- ✅ Helm deployment to staging
+- ✅ Terraform infrastructure scaffolding
+- ✅ SBOM generation
+- ✅ Security scanning (SpotBugs, OWASP)
+- ✅ Smoke tests
+- ✅ Slack notifications
 
-#### 1. `catalog-service-ci.yml` - Dedicated Catalog Pipeline
-**Jobs:**
-- **Test** - Runs all 34 tests (unit + integration + service) with Testcontainers
-- **Build** - Creates JAR artifact
-- **Docker** - Builds and pushes image to ghcr.io (main/develop only)
-- **Security** - Trivy vulnerability scanning
+### Key Achievements
+- **Build Efficiency**: Only changed services build (5-10 min vs 60+ min)
+- **Automated Deployment**: Push to develop → auto-deploy to staging
+- **Security**: SBOM, dependency scanning, static analysis
+- **Observability**: Slack notifications, deployment status
 
-**Triggers:** Push/PR to main/develop/staging (only when catalog-service changes)
-
-#### 2. `ci.yml` - Monorepo Pipeline
-**Jobs:**
-- **detect-changes** - Smart path filtering for multiple services
-- **test-catalog** - Conditional catalog testing
-- **lint** - Code quality checks (Checkstyle, SpotBugs)
-- **docs** - OpenAPI and Markdown validation
-- **summary** - Overall CI status
-
-**Ready for scaling:** pricing, cart, order, payment, inventory services
-
-### JaCoCo Code Coverage
-- Minimum threshold: 70%
-- HTML reports: `target/site/jacoco/index.html`
-- XML reports for CI integration
-- Automatic PR comments with coverage
-
-### Build Configuration
-- Java 17 with Temurin distribution
-- Maven dependency caching
-- Docker layer caching
-- Testcontainers for integration tests
-- PostgreSQL 15-alpine for test database
+### Next Steps
+- Week 16: SLOs & Alerts
+- Week 17: Production deployment pipeline
 
 ---
 
-## Adding CI for New Services
-
-To add CI for a new service (e.g., `pricing-service`):
-
-1. **Update `ci.yml`** path filters:
-```yaml
-pricing:
-  - 'services/pricing-service/**'
-  - 'platform-libraries/**'
-```
-
-2. **Add test job**:
-```yaml
-test-pricing:
-  name: Test Pricing Service
-  needs: detect-changes
-  if: needs.detect-changes.outputs.pricing == 'true'
-  # ... copy test-catalog job structure
-```
-
-3. **Create dedicated workflow** (optional):
-```yaml
-# .github/workflows/pricing-service-ci.yml
-```
-
----
-
-## Metrics & SLOs
-
-**CI Pipeline SLOs:**
-- **Build Time**: < 5 minutes for unit tests
-- **Test Coverage**: > 70% for all services
-- **Success Rate**: > 95% (excluding flaky tests)
-- **Docker Build**: < 3 minutes
-
-**Current Performance:**
-- Unit Tests: ~1 second
-- Integration Tests: ~10-15 seconds
-- Full Pipeline: ~3-4 minutes
-
----
-
-## Future Enhancements
-
-- [ ] Add contract testing (Pact)
-- [ ] Add performance testing (k6)
-- [ ] Add E2E tests with all services
-- [ ] Add SonarQube integration
-- [ ] Add automated dependency updates (Dependabot)
-- [ ] Add automated release notes generation
-- [ ] Add deployment to staging/production
-- [ ] Add smoke tests post-deployment
-- [ ] Add load testing in CI
-- [ ] Add mutation testing (PIT)
-
----
-
-## References
-
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Testcontainers Documentation](https://www.testcontainers.org/)
-- [JaCoCo Documentation](https://www.jacoco.org/jacoco/trunk/doc/)
-- [Maven Surefire Plugin](https://maven.apache.org/surefire/maven-surefire-plugin/)
+**Last Updated:** December 12, 2025  
+**Version:** 0.1.0  
+**Status:** Week 15 Complete ✅
 

@@ -1,0 +1,113 @@
+name: Deploy to Staging
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'services/**'
+      - 'helm/**'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy (or "all")'
+        required: true
+        default: 'all'
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+  NAMESPACE: platform-core-staging
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.13.0'
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          kubectl config use-context staging
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl label namespace ${{ env.NAMESPACE }} istio-injection=enabled --overwrite
+      - name: Deploy Catalog Service
+        if: contains(github.event.head_commit.modified, 'services/catalog-service') || github.event.inputs.service == 'catalog-service' || github.event.inputs.service == 'all'
+        run: |
+          helm upgrade --install catalog-service ./helm/charts/catalog-service \
+            --namespace ${{ env.NAMESPACE }} \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/catalog-service \
+            --set image.tag=${{ github.sha }} \
+            --set env[0].value=staging \
+            --wait --timeout 5m
+      - name: Deploy Pricing Service
+        if: contains(github.event.head_commit.modified, 'services/pricing-service') || github.event.inputs.service == 'pricing-service' || github.event.inputs.service == 'all'
+        run: |
+          helm upgrade --install pricing-service ./helm/charts/pricing-service \
+            --namespace ${{ env.NAMESPACE }} \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/pricing-service \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+      - name: Deploy Cart Service
+        if: contains(github.event.head_commit.modified, 'services/cart-service') || github.event.inputs.service == 'cart-service' || github.event.inputs.service == 'all'
+        run: |
+          helm upgrade --install cart-service ./helm/charts/cart-service \
+            --namespace ${{ env.NAMESPACE }} \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/cart-service \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment -n ${{ env.NAMESPACE }} --timeout=5m
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n ${{ env.NAMESPACE }}
+          kubectl get svc -n ${{ env.NAMESPACE }}
+      - name: Run smoke tests
+        run: |
+          ./scripts/ci/smoke-tests.sh ${{ env.NAMESPACE }}
+  notify:
+    name: Notify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify Slack
+        if: ${{ needs.deploy.result == 'success' }}
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "✅ Deployment to staging successful",
+              "blocks": [{
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Deployment Status:* Success\n*Environment:* Staging\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                }
+              }]
+            }'
+      - name: Notify on failure
+        if: ${{ needs.deploy.result == 'failure' }}
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "❌ Deployment to staging failed",
+              "blocks": [{
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Deployment Status:* Failed\n*Environment:* Staging\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                }
+              }]
+            }'
