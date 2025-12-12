@@ -1,0 +1,13 @@
+apiVersion: v2
+name: catalog-service
+description: Helm chart for Catalog Service
+type: application
+version: 0.1.0
+appVersion: "0.0.1-SNAPSHOT"
+keywords:
+  - ecommerce
+  - microservices
+  - catalog
+maintainers:
+  - name: E-Commerce Platform Team
+    email: team@ecommerce.local

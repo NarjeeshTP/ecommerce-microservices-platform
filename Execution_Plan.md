@@ -234,10 +234,19 @@ Build supporting services and infra.
 # Phase 5 — Production Readiness & Orchestration (Week 13–16)
 Kubernetes, Helm, CI/CD, SRE practices.
 
-**Week 13 (Kubernetes)**
-- Convert Docker Compose to Helm charts or K8s manifests
-- Setup kind/minikube scripts for local K8s testing
-- Define namespaces (platform-system, platform-core, platform-infra)
+**Week 13 (Kubernetes)** ✅ COMPLETED (Dec 11, 2025)
+- ✅ Namespace definitions (platform-system, platform-core, platform-infra)
+- ✅ Kind cluster configuration (3 nodes, ingress port mapping)
+- ✅ Minikube setup script with addons
+- ✅ Helm chart template for services
+- ✅ Deployment, Service, Ingress templates
+- ✅ Resource requests and limits
+- ✅ Horizontal Pod Autoscaler (HPA)
+- ✅ Liveness and readiness probes
+- ✅ ConfigMap and Secret management
+- ✅ NGINX Ingress Controller setup
+- ✅ Metrics Server for autoscaling
+- ✅ Comprehensive README.md (40+ KB)
 
 **Week 14 (Service Mesh & Resilience)**
 - Optional: install Istio or Linkerd in local Kind
